@@ -15,7 +15,6 @@ import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
@@ -25,6 +24,8 @@ import java.util.*;
 // Example: 0;0;false;CAULDRON:1,CAULDRON:2,CAULDRON:3;1;0;REDSTONE:5
 // Result:  If the player puts 5 redstones into any water levels cauldron and right-clicks on it,
 //          the 5 redstones will be removed and the skills in the skill list will be executed, and consume a level water of cauldron.
+// Example: 99999;0;false;CAULDRON:1,CAULDRON:2,CAULDRON:3;1;-3;AIR:0
+// Result:  When other skills do not match, execution to this skill will remove all items and execute skills.
 //
 // when range equal -1, offset position y will add one, and range is 0.1d.
 // when range equal -2, disregard all item match conditions and allow execution of skills, it is recommended to set id as last position.
@@ -166,12 +167,6 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
 
     @OverridePriority
     @EventHandler
-    public void onEat(PlayerItemConsumeEvent event) {
-        MagicSpells.error("" + event.getEventName() + " : " + event.getItem().getType().name());
-    }
-
-    @OverridePriority
-    @EventHandler
     public void onRightClick(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.LEFT_CLICK_BLOCK) return;
         int action = event.getAction() == Action.LEFT_CLICK_BLOCK ? 1 : 0;
@@ -276,9 +271,14 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                 MagicSpells.error("[" + indexTemp + "] range filter: " + String.join(",", debugMaterials2));
                             }
                             int counter = 0;
+                            List<Material> matchedItems = new ArrayList<>();
                             List<Item> needRemove = new ArrayList<>();
                             List<Integer> needRemoveCount = new ArrayList<>();
                             List<Integer> isRangeNegative = new ArrayList<>();
+                            List<Boolean> bIsPredefine = new ArrayList<>(sIsPredefine);
+                            List<ItemStack> bPredefine = new ArrayList<>(sPredefine);
+                            List<Material> bMaterials = new ArrayList<>(sMaterials);
+                            List<Integer> bCounts = new ArrayList<>(sCounts);
                             for (int i = 0; i < itemsMatchRange.size(); i++) {
                                 Item item = itemsMatchRange.get(i);
                                 if (itemsMatchRangeAddonMsg.get(i) != 0) {
@@ -296,10 +296,6 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                         isRangeNegative.add(null);
                                     }
                                 } else {
-                                    List<Boolean> bIsPredefine = new ArrayList<>(sIsPredefine);
-                                    List<ItemStack> bPredefine = new ArrayList<>(sPredefine);
-                                    List<Material> bMaterials = new ArrayList<>(sMaterials);
-                                    List<Integer> bCounts = new ArrayList<>(sCounts);
                                     if (debugMode) {
                                         MagicSpells.error("[" + indexTemp + "] [" + item.getItemStack().getType().name() + "] bList size: b" + bIsPredefine.size() + " | p" + bPredefine.size() + " | m" + bMaterials.size() + " | c" + bCounts.size());
                                         MagicSpells.error("[" + indexTemp + "] [" + item.getItemStack().getType().name() + "] needRemoveList size: i" + needRemove.size() + " | c" + needRemoveCount.size());
@@ -329,24 +325,30 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                                 MagicSpells.error("[" + indexTemp + "] [" + item.getItemStack().getType().name() + "] [" + j  + "] count: ITEMx" + item.getItemStack().getAmount() + " vs REQUIREx" + bCounts.get(j));
                                             }
                                             if (item.getItemStack().getAmount() == bCounts.get(j)) {
-                                                needRemove.add(item);
-                                                needRemoveCount.add(-1);
-                                                isRangeNegative.add(null);
-                                                counter++;
-                                                bIsPredefine.remove(j);
-                                                bPredefine.remove(j);
-                                                bMaterials.remove(j);
-                                                bCounts.remove(j);
+                                                if (!matchedItems.contains(item.getItemStack().getType())) {
+                                                    needRemove.add(item);
+                                                    needRemoveCount.add(-1);
+                                                    isRangeNegative.add(null);
+                                                    counter++;
+                                                    bIsPredefine.remove(j);
+                                                    bPredefine.remove(j);
+                                                    bMaterials.remove(j);
+                                                    bCounts.remove(j);
+                                                }
+                                                matchedItems.add(item.getItemStack().getType());
                                                 break;
                                             } else if (item.getItemStack().getAmount() > bCounts.get(j)) {
-                                                needRemove.add(item);
-                                                needRemoveCount.add(bCounts.get(j));
-                                                isRangeNegative.add(null);
-                                                counter++;
-                                                bIsPredefine.remove(j);
-                                                bPredefine.remove(j);
-                                                bMaterials.remove(j);
-                                                bCounts.remove(j);
+                                                if (!matchedItems.contains(item.getItemStack().getType())) {
+                                                    needRemove.add(item);
+                                                    needRemoveCount.add(bCounts.get(j));
+                                                    isRangeNegative.add(null);
+                                                    counter++;
+                                                    bIsPredefine.remove(j);
+                                                    bPredefine.remove(j);
+                                                    bMaterials.remove(j);
+                                                    bCounts.remove(j);
+                                                }
+                                                matchedItems.add(item.getItemStack().getType());
                                                 break;
                                             }
                                         }
@@ -354,11 +356,16 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                 }
                             }
                             if (debugMode) {
-                                MagicSpells.error("[" + indexTemp + "] match item data counter: " + counter + " size:" + sMaterials.size());
+                                List<String> matchItemList = new ArrayList<>();
+                                for (Material mm : matchedItems) {
+                                    matchItemList.add(mm.name());
+                                }
+                                MagicSpells.error("[" + indexTemp + "] match item data counter: " + counter + " size: " + sMaterials.size());
+                                MagicSpells.error("[" + indexTemp + "] match: " + String.join(" ", matchItemList));
                                 MagicSpells.error("[" + indexTemp + "] range +0 size: " + needRemove.size());
                                 MagicSpells.error("[" + indexTemp + "] range -0 size: " + isRangeNegative.size());
                             }
-                            if (counter == sMaterials.size()) {
+                            if (counter == sMaterials.size() || range.get(indexTemp) == -2 || range.get(indexTemp) == -3) {
                                 if (debugMode) {
                                     List<String> debugMaterials3 = new ArrayList<>();
                                     for (int i = 0; i < sMaterials.size(); i++) {
