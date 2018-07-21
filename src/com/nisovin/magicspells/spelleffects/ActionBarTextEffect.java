@@ -74,7 +74,8 @@ public class ActionBarTextEffect extends SpellEffect {
 	}
 	
 	private void send(Player player) {
-		MagicSpells.getVolatileCodeHandler().sendActionBarMessage(player, MagicSpells.plugin.doArgumentAndVariableSubstitution(message, player, null).replace("%t", player.getName()));
+		MagicSpells.getVolatileCodeHandler().sendActionBarMessage(player,
+				MagicSpells.plugin.doArgumentAndVariableSubstitution(message, player, null).replace("%t", player.getName()));
 	}
 	
 }

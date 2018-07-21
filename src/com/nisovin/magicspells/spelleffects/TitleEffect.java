@@ -148,7 +148,10 @@ public class TitleEffect extends SpellEffect {
 	}
 	
 	private void send(Player player) {
-		MagicSpells.getVolatileCodeHandler().sendTitleToPlayer(player, MagicSpells.plugin.doArgumentAndVariableSubstitution(title, player, null).replace("%t", player.getName()), MagicSpells.plugin.doArgumentAndVariableSubstitution(subtitle, player, null).replace("%t", player.getName()), fadeIn, stay, fadeOut);
+		MagicSpells.getVolatileCodeHandler().sendTitleToPlayer(player,
+				MagicSpells.plugin.doArgumentAndVariableSubstitution(title, player, null).replace("%t", player.getName()),
+				MagicSpells.plugin.doArgumentAndVariableSubstitution(subtitle, player, null).replace("%t", player.getName()),
+				fadeIn, stay, fadeOut);
 	}
 
 }
