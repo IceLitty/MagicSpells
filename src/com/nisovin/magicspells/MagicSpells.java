@@ -650,6 +650,7 @@ public class MagicSpells extends JavaPlugin {
 		// Get spells from config
 		Set<String> spellKeys = config.getSpellKeys();
 		if (spellKeys == null) return;
+		Map<String, Constructor<? extends Spell>> constructors = new HashMap<>();
 		for (String spellName : spellKeys) {
 			if (config.getBoolean("spells." + spellName + ".enabled", true)) {
 				long starttime = System.currentTimeMillis();
@@ -665,9 +666,13 @@ public class MagicSpells extends JavaPlugin {
 				}
 				try {
 					// Load spell class
-					Class<? extends Spell> spellClass = cl.loadClass(className).asSubclass(Spell.class);
-					Constructor<? extends Spell> constructor = spellClass.getConstructor(MagicConfig.class, String.class);
-					constructor.setAccessible(true);
+					Constructor<? extends Spell> constructor = constructors.get(className);
+					if (constructor == null) {
+						Class<? extends Spell> spellClass = cl.loadClass(className).asSubclass(Spell.class);
+						constructor = spellClass.getConstructor(MagicConfig.class, String.class);
+						constructor.setAccessible(true);
+						constructors.put(className, constructor);
+					}
 					Spell spell = constructor.newInstance(config, spellName);
 					spells.put(spellName.toLowerCase(), spell);
 					spellsOrdered.add(spell);

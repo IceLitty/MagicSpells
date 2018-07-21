@@ -8,8 +8,8 @@ import com.nisovin.magicspells.DebugHandler;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
-public class LastLifeLongerThan extends Condition {
 	
+public class LastLifeLongerThanCondition extends Condition {
 	int time;
 	
 	@Override

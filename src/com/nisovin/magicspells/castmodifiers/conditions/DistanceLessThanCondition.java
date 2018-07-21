@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 import com.nisovin.magicspells.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
-public class DistanceLessThan extends Condition {
+public class DistanceLessThanCondition extends Condition {
 
 	private double distanceSq;
 	

@@ -54,6 +54,8 @@ public abstract class Condition {
 		conditions.put("onblock", OnBlockCondition.class);
 		conditions.put("inblock", InBlockCondition.class);
 		conditions.put("onground", OnGroundCondition.class);
+		conditions.put("underblock", UnderBlockCondition.class);
+		conditions.put("overblock", OverBlockCondition.class);
 		conditions.put("inregion", InRegionCondition.class);
 		conditions.put("incuboid", InCuboidCondition.class);
 		conditions.put("innomagiczone", InNoMagicZoneCondition.class);
@@ -106,25 +108,27 @@ public abstract class Condition {
 		conditions.put("playeronline", PlayerOnlineCondition.class);
 		conditions.put("chance", ChanceCondition.class);
 		conditions.put("entitytype", EntityTypeCondition.class);
-		conditions.put("distancemorethan", DistanceMoreThan.class);
-		conditions.put("distancelessthan", DistanceLessThan.class);
+		conditions.put("distancemorethan", DistanceMoreThanCondition.class);
+		conditions.put("distancelessthan", DistanceLessThanCondition.class);
 		conditions.put("name", NameCondition.class);
 		conditions.put("namepattern", NamePatternCondition.class);
 		conditions.put("uptime", UpTimeCondition.class);
 		conditions.put("variablemorethan", VariableMoreThanCondition.class);
 		conditions.put("variablelessthan", VariableLessThanCondition.class);
 		conditions.put("variableequals", VariableEqualsCondition.class);
+		conditions.put("variablecompare", VariableCompareCondition.class);
 		conditions.put("variablematches", VariableMatchesCondition.class);
-		conditions.put("alivelessthan", AliveLessThan.class);
-		conditions.put("alivemorethan", AliveMoreThan.class);
-		conditions.put("lastlifelongerthan", LastLifeLongerThan.class);
-		conditions.put("lastlifeshorterthan", LastLifeShorterThan.class);
+		conditions.put("variablestringequals", VariableStringEqualsCondition.class);
+		conditions.put("alivelessthan", AliveLessThanCondition.class);
+		conditions.put("alivemorethan", AliveMoreThanCondition.class);
+		conditions.put("lastlifelongerthan", LastLifeLongerThanCondition.class);
+		conditions.put("lastlifeshorterthan", LastLifeShorterThanCondition.class);
 		conditions.put("testforblock", TestForBlockCondition.class);
 		conditions.put("richerthan", RicherThanCondition.class);
 		conditions.put("lookingatblock", LookingAtBlockCondition.class);
 		conditions.put("oncooldown", OnCooldownCondition.class);
 		conditions.put("hasmark", HasMarkCondition.class);
-		conditions.put("playercountabove", PlayerCountAbove.class);
+		conditions.put("playercountabove", PlayerCountAboveCondition.class);
 		conditions.put("targetmaxhealthgreaterthan", TargetMaxHealthGreaterThanCondition.class);
 		conditions.put("targetmaxhealthlessthan", TargetMaxHealthLessThanCondition.class);
 		conditions.put("worldguardmembership", WorldGuardRegionMembershipCondition.class);
@@ -161,6 +165,8 @@ public abstract class Condition {
 		conditions.put("behindtarget", BehindTargetCondition.class);
 		conditions.put("thundering", ThunderingCondition.class);
 		conditions.put("raining", RainingCondition.class);
+		conditions.put("onleash", OnLeashCondition.class);
+		conditions.put("griefpreventionisowner", GriefPreventionIsOwnerCondition.class);
 	}
 	
 }

@@ -125,32 +125,28 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 	public void initialize() {
 		super.initialize();
 
-		Subspell s = new Subspell(hitSpellName);
-		if (s.process()) {
-			spell = s;
-		} else {
+		spell = new Subspell(hitSpellName);
+		if (!spell.process()) {
+			spell = null;
 			MagicSpells.error("HomingMissileSpell " + internalName + " has an invalid spell defined!");
 		}
 
-		Subspell s2 = new Subspell(groundSpellName);
-		if (s2.process()) {
-			groundSpell = s2;
-		} else {
-			MagicSpells.error("HomingMissileSpell " + internalName + " has an invalid spell-on-hit-ground defined!");
+		groundSpell = new Subspell(groundSpellName);
+		if (!groundSpell.process()) {
+			groundSpell = null;
+			if (!groundSpellName.isEmpty()) MagicSpells.error("HomingMissileSpell " + internalName + " has an invalid spell-on-hit-ground defined!");
 		}
 
-		Subspell s3 = new Subspell(airSpellName);
-		if (s3.process()) {
-			airSpell = s3;
-		} else {
-			MagicSpells.error("HomingMissileSpell " + internalName + " has an invalid spell-on-hit-air defined!");
+		airSpell = new Subspell(airSpellName);
+		if (!airSpell.process()) {
+			airSpell = null;
+			if (!airSpellName.isEmpty()) MagicSpells.error("HomingMissileSpell " + internalName + " has an invalid spell-on-hit-air defined!");
 		}
 
-		Subspell s4 = new Subspell(durationSpellName);
-		if (s4.process()) {
-			durationSpell = s4;
-		} else {
-			MagicSpells.error("HomingMissileSpell " + internalName + " has an invalid spell-after-duration defined!");
+		durationSpell = new Subspell(durationSpellName);
+		if (!durationSpell.process()) {
+			durationSpell = null;
+			if (!durationSpellName.isEmpty()) MagicSpells.error("HomingMissileSpell " + internalName + " has an invalid spell-after-duration defined!");
 		}
 	}
 
