@@ -21,11 +21,11 @@ import org.bukkit.inventory.ItemStack;
 import java.util.*;
 
 //
-// Format:  id;Right/Left/RorLAction;debug;(permissionNode);IsFireBlockUnder;ExpPoint(,Split,DelayStart,DelayEnd);blockType1,blockType2:blockType2DataValue;modifyBlockMode;offsetRange;matchItem:count,matchItem2:count
-// Example: 0;0;false;;false;0;CAULDRON:1,CAULDRON:2,CAULDRON:3;1;0;REDSTONE:5
+// Format:  id;Right/Left/RorLAction;debug;(permissionNode);IsFireBlockUnder;ExpPoint(,Split,DelayStart,DelayEnd);blockType1,blockType2:blockType2DataValue;modifyBlockMode;modifyChance;offsetRange;matchItem:count,matchItem2:count
+// Example: 0;0;false;;false;0;CAULDRON:1,CAULDRON:2,CAULDRON:3;1;1;0;REDSTONE:5
 // Result:  If the player puts 5 redstones into any water levels cauldron and right-clicks on it,
-//          the 5 redstones will be removed and the skills in the skill list will be executed, and consume a level water of cauldron.
-// Example: 99999;0;false;;false;0;CAULDRON:1,CAULDRON:2,CAULDRON:3;1;-3;AIR:0
+//          the 5 redstones will be removed and the skills in the skill list will be executed, and 100% chance consume a level water of cauldron.
+// Example: 99999;0;false;;false;0;CAULDRON:1,CAULDRON:2,CAULDRON:3;1;1;-3;AIR:0
 // Result:  When other skills do not match, execution to this skill will remove all items and execute skills.
 //
 // when range equal -1, offset position y will add one (items on block), and range is 0.1d.
@@ -53,6 +53,14 @@ import java.util.*;
 //            JACK_O_LANTERN :
 //          any num except 0 : they will swap each other
 //
+//
+//
+//
+//
+//
+// sometimes ITEM WILL BE COST NOT GET REFUND
+// So may you need create an ID 99999 script to match it, take script failed animations to player.
+//
 
 public class RightClickBlockTypeInspectItemListener extends PassiveListener {
 
@@ -68,6 +76,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
     Map<Integer, Integer> giveExpOrbsDelayEnd = new HashMap<>();
     Map<Integer, List<MagicMaterial>> materials = new HashMap<>();
     Map<Integer, Integer> modifyBlock = new HashMap<>();
+    Map<Integer, Float> modifyChance = new HashMap<>();
     Map<Integer, Double> range = new HashMap<>();
     Map<Integer, List<Boolean>> isPredefineItem = new HashMap<>();
     Map<Integer, List<ItemStack>> matchItemStacks = new HashMap<>();
@@ -76,6 +85,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
 
     @Override
     public void registerSpell(PassiveSpell spell, PassiveTrigger trigger, String var) {
+        // initialize
         String[] all = var.split(";");
         int indexIfAdd = types.size();
         if (all.length > 0) {
@@ -127,10 +137,13 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
             modifyBlock.put(indexIfAdd, Integer.parseInt(all[7]));
         }
         if (all.length > 8) {
-            range.put(indexIfAdd, Double.parseDouble(all[8]));
+            modifyChance.put(indexIfAdd, Float.parseFloat(all[8]));
         }
         if (all.length > 9) {
-            String[] split = all[9].split(",");
+            range.put(indexIfAdd, Double.parseDouble(all[9]));
+        }
+        if (all.length > 10) {
+            String[] split = all[10].split(",");
             List<ItemStack> tempItemStackList = new ArrayList<>();
             List<Material> tempMaterialList = new ArrayList<>();
             List<Integer> tempCountList = new ArrayList<>();
@@ -141,12 +154,16 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                 if (temp[0].contains("PRE|")) {
                     String preName = temp[0].replace("PRE|", "");
                     ItemStack isa = Util.getItemStackFromString(preName);
-                    if (temp.length > 1 && Integer.parseInt(temp[1]) >= 0) {
-                        tempCountList.add(Integer.parseInt(temp[1]));
-                        isa.setAmount(Integer.parseInt(temp[1]));
+                    if (isa == null) {
+                        MagicSpells.error("Can't find this predefine item: " + preName + ", function will not work correctly.");
                     } else {
-                        tempCountList.add(1);
-                        isa.setAmount(1);
+                        if (temp.length > 1 && Integer.parseInt(temp[1]) >= 0) {
+                            tempCountList.add(Integer.parseInt(temp[1]));
+                            isa.setAmount(Integer.parseInt(temp[1]));
+                        } else {
+                            tempCountList.add(1);
+                            isa.setAmount(1);
+                        }
                     }
                     tempItemStackList.add(isa);
                     tempMaterialList.add(null);
@@ -172,6 +189,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
             indexer.add(indexIfAdd);
         }
         Collections.sort(indexer);
+        // if any config contains DEBUG ON, then output all of them loaded cost items, range and run spells
         if (tempDebug.values().contains(true)) {
             List<String> temp = new ArrayList<>();
             for (int j = 0; j < matchMaterials.get(indexIfAdd).size(); j++) {
@@ -212,11 +230,13 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
 
     private List<PassiveSpell> getSpells(Block block, Location location, Integer action, Player player) {
         for (int h = 0; h < indexer.size(); h++) {
+            // each craft recipe
             int indexTemp = indexer.get(h);
             boolean debugMode = tempDebug.get(indexTemp);
             if (debugMode) {
                 MagicSpells.error("[" + indexTemp + "] === Start process ===============================================");
             }
+            // if permission not have, then run recipe failed, go to next recipe.
             boolean perm = false;
             if ("".equals(permissions.get(indexTemp))) {
                 perm = true;
@@ -227,6 +247,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                 MagicSpells.error("[" + indexTemp + "] Perm state: " + perm + " " + permissions.get(indexTemp));
             }
             if (perm) {
+                // if player use right (double meaning HAHA) hands to click block, then go on.
                 boolean isActionOk = false;
                 if (actions.get(indexTemp) == 2) {
                     isActionOk = true;
@@ -234,6 +255,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                     isActionOk = true;
                 }
                 if (isActionOk) {
+                    // calculate if cost items meet the demand.
                     List<MagicMaterial> magicMaterialList = materials.get(indexTemp);
                     for (MagicMaterial m : magicMaterialList) {
                         if (debugMode) {
@@ -257,11 +279,13 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                 }
                                 MagicSpells.error("[" + indexTemp + "] ready: r:" + sRange + " I:" + String.join(",", debugMaterials1));
                             }
+                            // start to get specified range items.
                             Entity[] entities = location.getChunk().getEntities();
                             List<Item> itemsMatchRange = new ArrayList<>();
                             List<Integer> itemsMatchRangeAddonMsg = new ArrayList<>();
                             for (Entity entity : entities) {
                                 if (entity instanceof Item) {
+                                    // use different condition to decide which items meet the demand.
                                     if (Math.floor(sRange) >= 0 || Math.floor(sRange) == -3) {
                                         double rangeTemp = sRange;
                                         if (rangeTemp == 0) rangeTemp = 0.1d;
@@ -300,6 +324,10 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                     }
                                 }
                             }
+                            // if items list size match, go on.
+                            // (So you must ensure that the type of each COST item is inconsistent, and due to MC restrictions, the maximum stacking of items is 64.)
+                            // (Same means each recipe you just can't use one id/item count over than 64.)
+                            // (In server settings if entity item stack smaller, the limit in here will be smaller too.)
                             if (itemsMatchRange.size() > 0) {
                                 if (debugMode) {
                                     List<String> debugMaterials2 = new ArrayList<>();
@@ -313,6 +341,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                     MagicSpells.error("[" + indexTemp + "] range filter: " + String.join(",", debugMaterials2));
                                 }
                                 int counter = 0;
+                                // ready to decide and remove/decrease them.
                                 List<Material> matchedItems = new ArrayList<>();
                                 List<Item> needRemove = new ArrayList<>();
                                 List<Integer> needRemoveCount = new ArrayList<>();
@@ -407,17 +436,22 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                     MagicSpells.error("[" + indexTemp + "] range +0 size: " + needRemove.size());
                                     MagicSpells.error("[" + indexTemp + "] range -0 size: " + isRangeNegative.size());
                                 }
+                                // some range can just decide them, doesn't cost them.
+                                // and if counter matches, go on.
                                 if (counter == sMaterials.size() || range.get(indexTemp) == -2 || range.get(indexTemp) == -3) {
+                                    // if use this fire block under clicked block settings, decide them.
                                     Block fireBlock = block.getWorld().getBlockAt(block.getLocation().add(0, -1, 0));
+                                    // if not use fire block settings, then skip it.
                                     boolean blockConfirmed = true;
                                     if (isFireBlockUnder.get(indexTemp)) {
-                                        if (fireBlock.getType() != Material.FIRE) {
+                                        if (fireBlock.getType() != Material.FIRE && fireBlock.getType() != Material.LAVA && fireBlock.getType() != Material.STATIONARY_LAVA && fireBlock.getType() != Material.MAGMA) {
                                             blockConfirmed = false;
                                         }
                                     }
                                     if (debugMode) {
-                                        MagicSpells.error("[" + indexTemp + "] Is under fire block: " + fireBlock.getType() + ":" + Material.FIRE + ":" + blockConfirmed);
+                                        MagicSpells.error("[" + indexTemp + "] Is under fire block: " + fireBlock.getType() + ":" + blockConfirmed);
                                     }
+                                    // or use fire block settings and block judge failed, then script failed.
                                     if (blockConfirmed) {
                                         if (debugMode) {
                                             List<String> debugMaterials3 = new ArrayList<>();
@@ -430,6 +464,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                             }
                                             MagicSpells.error("[" + indexTemp + "] Remove: " + String.join(",", debugMaterials3));
                                         }
+                                        // judge end, remove items.
                                         for (int i = 0; i < needRemove.size(); i++) {
                                             if (isRangeNegative.get(i) == null) {
                                                 if (needRemoveCount.get(i) == -1) {
@@ -447,7 +482,18 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                                 }
                                             }
                                         }
-                                        if (modifyBlock.get(indexTemp) != 0) {
+                                        // decide witch block will be changed it meta value.
+                                        float chance = modifyChance.get(indexTemp);
+                                        boolean chance2Modify = false;
+                                        if (chance == 1) {
+                                            chance2Modify = true;
+                                        } else if (new Random().nextInt(100) < chance * 100) {
+                                            chance2Modify = true;
+                                        }
+                                        if (debugMode) {
+                                            MagicSpells.error("[" + indexTemp + "] block modify chance is " + chance + ", chance flag status: " + chance2Modify);
+                                        }
+                                        if (chance2Modify && modifyBlock.get(indexTemp) != 0) {
                                             int mode = modifyBlock.get(indexTemp);
                                             if (block.getState().getType().equals(Material.CAULDRON)) {
                                                 if (debugMode) { MagicSpells.error("[" + indexTemp + "] block type is " + block.getState().getType().name()); }
@@ -609,6 +655,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                                 block.setType(Material.PUMPKIN);
                                             }
                                         }
+                                        // if needed, will run command by GroupManager to add permission to player.
                                         if (!"".equals(permissions.get(indexTemp))) {
 //                                        PermissionAttachment pma = player.addAttachment(MagicSpells.plugin);
 //                                        pma.unsetPermission(permissions.get(indexTemp));
@@ -618,6 +665,9 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                                 MagicSpells.error("[" + indexTemp + "] Perm " + permissions.get(indexTemp) + " removed!");
                                             }
                                         }
+                                        // if needed, will spawn some ExpOrbs to player
+                                        // but it have some bugs, some orbs first summoned will be merged by after. And them exp value will be ignore, maybe a server bug.
+                                        // so this function I make them all 0 value exp without last one.
                                         if (giveExpOrbs.get(indexTemp) != 0) {
                                             int splitVal = giveExpOrbsSplit.get(indexTemp);
                                             int baseDelay = giveExpOrbsDelayStart.get(indexTemp);
@@ -643,14 +693,35 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                                 MagicSpells.error("[" + indexTemp + "] All " + giveExpOrbs.get(indexTemp) + " exp will send " + (splitVal - 1) + "x0 & 1x" + giveExpOrbs.get(indexTemp) + " in " + baseDelay + "+([" + splitVal + "]*" + delayMulti + ") ms.");
                                             }
                                         }
+                                        // time to extinguish fire block.
                                         if (isFireBlockUnder.get(indexTemp)) {
                                             MagicSpells.plugin.getServer().getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> {
-                                                if (new Random().nextBoolean()) {
-                                                    fireBlock.breakNaturally();
-                                                    String str = MagicSpells.plugin.getMagicConfig().getString("general.str-icy-fire-extinguished", "");
-                                                    if (!str.isEmpty()) player.sendMessage(str);
-                                                    if (debugMode) {
-                                                        MagicSpells.error("[" + indexTemp + "] Fire extinguished.");
+                                                int rdm = new Random().nextInt(100);
+                                                if (rdm < 25) {
+                                                    if (fireBlock.getType() == Material.FIRE) {
+                                                        fireBlock.breakNaturally();
+                                                        String str = MagicSpells.plugin.getMagicConfig().getString("general.str-icy-fire-extinguished", "");
+                                                        if (!str.isEmpty()) player.sendMessage(str);
+                                                        if (debugMode) {
+                                                            MagicSpells.error("[" + indexTemp + "] Fire extinguished.");
+                                                        }
+                                                    } else if (fireBlock.getType() == Material.LAVA || fireBlock.getType() == Material.STATIONARY_LAVA) {
+                                                        if (rdm < 5) {
+                                                            fireBlock.breakNaturally();
+                                                            String str = MagicSpells.plugin.getMagicConfig().getString("general.str-icy-fire-extinguished", "");
+                                                            if (!str.isEmpty()) player.sendMessage(str);
+                                                            if (debugMode) {
+                                                                MagicSpells.error("[" + indexTemp + "] Lava block extinguished.");
+                                                            }
+                                                        } else {
+                                                            if (debugMode) {
+                                                                MagicSpells.error("[" + indexTemp + "] Lava block still alive.");
+                                                            }
+                                                        }
+                                                    } else {
+                                                        if (debugMode) {
+                                                            MagicSpells.error("[" + indexTemp + "] Magma block doesn't break.");
+                                                        }
                                                     }
                                                 } else {
                                                     if (debugMode) {
@@ -668,11 +739,13 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                             MagicSpells.error("[" + indexTemp + "] Will run skill: " + String.join(" ", spells1));
                                             MagicSpells.error("[" + indexTemp + "] =========================================== Run successfully! ===");
                                         }
+                                        // run spells, trigger finished.
                                         return types.get(indexTemp);
                                     } else {
                                         if (debugMode) {
                                             MagicSpells.error("[" + indexTemp + "] ========================= Run successfully but no fire block! ===");
                                         }
+                                        // run spells failed, trigger failed.
                                         return null;
                                     }
                                 }
@@ -685,6 +758,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                 MagicSpells.error("[" + indexTemp + "] ================================================= Run failed! ===");
             }
         }
+        // run spells failed, trigger failed.
         return null;
     }
 }
