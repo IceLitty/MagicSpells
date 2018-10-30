@@ -245,17 +245,24 @@ public class ArrowSpell extends Spell {
 					MagicSpells.scheduleDelayedTask(new Runnable() {
 						@Override
 						public void run() {
-							// FIXME this needs to be flattened
-							Player shooter = (Player)arrow.getShooter();
-							if (!data.casted && !data.spell.onCooldown(shooter) && data.spell.hasReagents(shooter, data.arrowSpellDataReagents)) {
-								boolean success = data.spell.spellOnHitGround.castAtLocation(shooter, arrow.getLocation(), data.power);
-								if (success) {
-									data.spell.setCooldown(shooter, data.spell.cooldown);
-									data.spell.removeReagents(shooter, data.arrowSpellDataReagents);
-								}
-								data.casted = true;
-								arrow.removeMetadata(METADATA_KEY, MagicSpells.plugin);
+							Player shooter = (Player) arrow.getShooter();
+							if (data.casted) return;
+							if (data.spell.onCooldown(shooter)) {
+								MagicSpells.sendMessage(formatMessage(strOnCooldown, "%c", Math.round(getCooldown(shooter)) + ""), shooter, null);
+								return;
 							}
+							if (!data.spell.hasReagents(shooter, data.arrowSpellDataReagents)) {
+								MagicSpells.sendMessage(strMissingReagents, shooter, null);
+								return;
+							}
+
+							boolean success = data.spell.spellOnHitGround.castAtLocation(shooter, arrow.getLocation(), data.power);
+							if (success) {
+								data.spell.setCooldown(shooter, data.spell.cooldown);
+								data.spell.removeReagents(shooter, data.arrowSpellDataReagents);
+							}
+							data.casted = true;
+							arrow.removeMetadata(METADATA_KEY, MagicSpells.plugin);
 						}
 					}, 0);
 				}

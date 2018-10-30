@@ -4,12 +4,9 @@
 // Add -Prelease to the build command to version the jars with release versions
 // (defaults to dev build labeling)
 
-// TODO make sure that the timestamps for the jars are correct
-// TODO make sure that the yml resources are always updated and correct timestamps
-// TODO move resource retrieval to its own task
-// TODO move the MSConfig data to settings.gradle
-// TODO make sure that builds are fast
-// TODO build the spigot server jars automatically  as needed
+// possible concern: make sure that the timestamps for the jars are correct
+// possible concern: make sure that the yml resources are always updated and correct timestamps
+// TODO build the spigot server jars automatically as needed
 // TODO create task to setup workspace
 // TODO make sure the clean task cleans everything properly
 // TODO make sure all builds can be cached where possible
@@ -26,12 +23,14 @@ buildscript {
   dependencies {
     classpath "com.github.jengelman.gradle.plugins:shadow:2.0.3"
     classpath 'de.undercouch:gradle-download-task:3.4.2'
+    classpath "com.sarhanm:gradle-versioner:2.4.0"
   }
 }
 
 apply plugin: 'java'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'de.undercouch.download'
+apply plugin: "com.sarhanm.versioner"
 
 final String OPTION_DEPLOYMENT_NAMING = 'DeploymentNaming'
 final String OPTION_RELEASE = 'release'
@@ -65,7 +64,7 @@ dependencies {
 }
 
 public class MSConfig {
-  String coreVersion = '3.5'
+  String coreVersion = '3.6'
   String coreSrcDir = 'src'
   String coreBuildDir = 'bin'
 
@@ -577,6 +576,20 @@ task magicspellsRelease() {
     'magicspellsReleaseVersion',
     'magicspellsJarAll'
   ]
+}
+
+apply plugin: 'maven-publish'
+
+group = 'com.github.TheComputerGeek2'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'com.github.TheComputerGeek2'
+            version = "MagicSpells-${msconfig.coreVersion}-${gitdata.getCommit()}"
+            artifact magicspellsCoreJar
+        }
+    }
 }
 
 artifacts {

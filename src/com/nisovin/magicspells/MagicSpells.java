@@ -28,6 +28,7 @@ import com.nisovin.magicspells.util.TxtUtil;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.volatilecode.VolatileCodeEnabled_1_12_R1;
+import de.slikey.effectlib.util.ParticleEffect;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -203,6 +204,13 @@ public class MagicSpells extends JavaPlugin {
 		
 		effectManager = new EffectManager(this);
 		effectManager.enableDebug(debug);
+		try {
+			Class<?> particleEffectClass = ParticleEffect.class;
+			Method setEffectManagerMethod = particleEffectClass.getMethod("setEffectManager", EffectManager.class);
+			setEffectManagerMethod.invoke(null, effectManager);
+		} catch (Exception ignored) {
+			// No-op
+		}
 		
 		// Create storage stuff
 		spells = new HashMap<>();

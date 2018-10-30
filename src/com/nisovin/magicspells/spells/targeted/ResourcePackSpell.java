@@ -19,11 +19,11 @@ public class ResourcePackSpell extends TargetedSpell {
 		url = getConfigString("url", null);
 		String hashString = getConfigString("hash", null);
 		if (hashString != null) {
-			hash = hashString.getBytes();
-			
+			hash = hexStringToByteArray(hashString);
 			if (hash.length != HASH_LENGTH) {
 				// Send the message
 				MagicSpells.error("Incorrect length for resource pack hash: " + hash.length);
+				
 				MagicSpells.error("Avoiding use of the hash to avoid further problems.");
 				// Null it to prevent further errors
 				hash = null;
@@ -50,6 +50,16 @@ public class ResourcePackSpell extends TargetedSpell {
 		} else {
 			player.setResourcePack(url, hash);
 		}
+	}
+	
+	private static byte[] hexStringToByteArray(String s) {
+		int len = s.length();
+		byte[] data = new byte[len / 2];
+		for (int i = 0; i < len; i += 2) {
+			data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+									  + Character.digit(s.charAt(i+1), 16));
+		}
+		return data;
 	}
 
 }
