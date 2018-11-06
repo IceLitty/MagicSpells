@@ -59,7 +59,10 @@
    ```
    
    You can add more and more recipes and only need once setting deperm & addperm spell.
+   
    And recipe success spells can add a DummySpell to play particle on block.
+   
    Id is special for each receipe, can't repeat, because receipe is compare by id order!
+   
    More arguments and description are in upper link.
    
