@@ -22,6 +22,7 @@
         - clickblocktypeinspectitem delPermCmd=manudelp %a <permission>
       spells:
         - alchemy_empty_failed_item   # any spell you can, not run but magicspells need at least once in passive spell.
+   
     # We want to add a recipe use 10 raw fishes to get an exp bottle use stone.
     alchemy_recipe_stone:
       spell-class: ".PassiveSpell"
@@ -33,12 +34,14 @@
       spells:
         - alchemy_conjure_stone
         - alchemy_add_perm
+     
     # Need a conjure spell to conjure items to block location.
     alchemy_conjure_stone:
       spell-class: ".instant.ConjureSpell"
       add-to-inventory: false
       items:
         - stone 1 100%
+     
     # We also need a fail spell to receive if player try an unrecorded recipe.
     alchemy_empty_failed:
       spell-class: ".PassiveSpell"
@@ -50,6 +53,7 @@
       spells:
         - alchemy_empty_failed_item     # like give player an coal or empty.
         - alchemy_add_perm              # also need add perm back, because if recipe is not match, spell will not called.
+     
     # We need add permission back to let player use alchemy system again.
     alchemy_add_perm:
       spell-class: ".ExternalCommandSpell"
