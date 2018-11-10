@@ -46,13 +46,13 @@ import java.util.*;
 //  | de debug debugmode                                                            | false                             |
 //  | Turn on or off Debug Mode.                                                    |                                   |
 //  +-------------------------------------------------------------------------------+-----------------------------------+
-//  | pm perm permission                                                            | alchemy.all                       |
+//  | pm perm permission                                                            | empty list                        |
 //  | Player need have this perm to run this recipe, and will remove perm node when recipe success.                     |
 //  +-------------------------------------------------------------------------------+-----------------------------------+
-//  | world worldname                                                               | null                              |
+//  | world worldname                                                               | empty list                        |
 //  | If not null or '*', recipe will check player's world name is match, also can multi world like 'world1,world2'.    |
 //  +-------------------------------------------------------------------------------+-----------------------------------+
-//  | b ab block blocks actionblock actionblocks                                    | null                              |
+//  | b ab block blocks actionblock actionblocks                                    | empty list                        |
 //  | You can use 'CAULDRON' to check all cauldron, or 'CAULDRON:0' to check empty cauldron.                            |
 //  +-------------------------------------------------------------------------------+-----------------------------------+
 //  | m bm bmm mm mode modifymode blockmodifymode                                   | 0                                 |
@@ -74,7 +74,7 @@ import java.util.*;
 //  | noc nomodeconsume nomatchmodeconsume                                          | false                             |
 //  | Similar to NoMatchMode but will consume all items in the range.               |                                   |
 //  +-------------------------------------------------------------------------------+-----------------------------------+
-//  | i pi item items pitem pitems preitem preitems predefineitem predefineitems    | null                              |
+//  | i pi item items pitem pitems preitem preitems predefineitem predefineitems    | empty list                        |
 //  | Define the items for the recipe.                                              |                                   |
 //  +-------------------------------------------------------------------------------+-----------------------------------+
 //  | nf nofire                                                                     | false                             |
@@ -152,7 +152,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                 case "pm":
                 case "perm":
                 case "permission": {
-                    recipe.setPermissionString(kvList[1]);
+                    recipe.setPermissionStrings(Arrays.asList(kvList[1].split(",")));
                     break;
                 }
                 case "w":
@@ -403,8 +403,14 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
             if (recipe.getAction() == RightClickBlockTypeInspectItemListenerEnumAction.Action2_RightOrLeftClickBlock) actionOk = true;
             else if (recipe.getAction() == action) actionOk = true;
             if (actionOk) {
-                boolean permOk = false;
-                if (!recipe.isNeedPermission()) permOk = true; else if (player.hasPermission(recipe.getPermissionString())) permOk = true;
+                boolean permOk = true;
+                if (recipe.getPermissionStrings().size() > 0) {
+                    for (String perm : recipe.getPermissionStrings()) {
+                        if (!player.hasPermission(perm)) {
+                            permOk = false;
+                        }
+                    }
+                }
                 if (permOk) {
                     boolean worldOk = false;
                     if (recipe.getWorldName().size() > 0) {
@@ -502,9 +508,11 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                                     entitiesNeedRemove.get(i).remove();
                                                 }
                                             }
-                                            if (recipe.isNeedPermission()) {
-                                                MagicSpells.plugin.getServer().dispatchCommand(MagicSpells.plugin.getServer().getConsoleSender(), deletePermissionCommand.replace("%a", player.getName()).replace("<permission>", recipe.getPermissionString()));
-                                                if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Permission %s removed.", recipe.getId(), recipe.getPermissionString()));
+                                            if (recipe.getPermissionStrings().size() > 0) {
+                                                for (String perm : recipe.getPermissionStrings()) {
+                                                    MagicSpells.plugin.getServer().dispatchCommand(MagicSpells.plugin.getServer().getConsoleSender(), deletePermissionCommand.replace("%a", player.getName()).replace("<permission>", perm));
+                                                }
+                                                if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Permissions %s removed.", recipe.getId(), String.join(",", recipe.getPermissionStrings())));
                                             }
                                             boolean fireUnderCheat = false;
                                             if (recipe.isFireBlockUnder()) {
@@ -713,8 +721,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
         private int id = -1;
         private RightClickBlockTypeInspectItemListenerEnumAction action = RightClickBlockTypeInspectItemListenerEnumAction.Action0_RightClickBlock;
         private boolean debugFlag = false;
-        private boolean needPermission = false;
-        private String permissionString = "alchemy.all";
+        private List<String> permissionStrings = new ArrayList<>();
         private List<String> worldName = new ArrayList<>();
         private List<MagicMaterial> actionBlocks = new ArrayList<>();
         private RightClickBlockTypeInspectItemListenerEnumBlockModifyMode blockModifyMode = RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode0_NoModify;
@@ -828,17 +835,12 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
             this.debugFlag = debugFlag;
         }
 
-        public boolean isNeedPermission() {
-            return needPermission;
+        public List<String> getPermissionStrings() {
+            return permissionStrings;
         }
 
-        public String getPermissionString() {
-            return permissionString;
-        }
-
-        public void setPermissionString(String permissionString) {
-            this.permissionString = permissionString;
-            needPermission = true;
+        public void setPermissionStrings(List<String> permissionStrings) {
+            this.permissionStrings = permissionStrings;
         }
 
         public List<String> getWorldName() {
