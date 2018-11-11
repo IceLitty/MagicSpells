@@ -10,18 +10,18 @@ import org.bukkit.material.MaterialData;
 import java.util.Objects;
 
 public class MagicUnknownMaterial extends MagicMaterial {
-	
-	int type;
+
+	Material type;
 	short data;
 	
-	public MagicUnknownMaterial(int type, short data) {
-		this.type = type;
+	public MagicUnknownMaterial(String type, short data) {
+		this.type = Material.getMaterial(type);
 		this.data = data;
 	}
 	
 	@Override
 	public Material getMaterial() {
-		return Material.getMaterial(this.type);
+		return Material.getMaterial(this.type.toString());
 	}
 	
 	@Override
@@ -32,7 +32,7 @@ public class MagicUnknownMaterial extends MagicMaterial {
 	
 	@Override
 	public void setBlock(Block block, boolean applyPhysics) {
-		if (this.data < 16) block.setTypeIdAndData(this.type, (byte)this.data, applyPhysics);
+		if (this.data < 16) block.setType(this.type, applyPhysics);
 	}
 	
 	@Override
@@ -47,12 +47,12 @@ public class MagicUnknownMaterial extends MagicMaterial {
 	
 	@Override
 	public boolean equals(MaterialData matData) {
-		return matData.getItemTypeId() == this.type && matData.getData() == this.data;
+		return matData.getItemType() == this.type && matData.getData() == this.data;
 	}
 	
 	@Override
 	public boolean equals(ItemStack itemStack) {
-		return itemStack.getTypeId() == this.type && itemStack.getDurability() == this.data;
+		return itemStack.getType() == this.type && itemStack.getDurability() == this.data;
 	}
 	
 	@Override

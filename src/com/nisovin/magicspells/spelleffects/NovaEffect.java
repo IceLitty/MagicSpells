@@ -42,12 +42,12 @@ public class NovaEffect extends SpellEffect {
 		if (string != null && !string.isEmpty()) {
 			
 			String[] params = string.split(" ");
-			int type = 51;
+			String type = "fire";
 			byte data = 0;
 			
 			if (params.length >= 1) {
 				try {
-					type = Integer.parseInt(params[0]);
+					type = params[0];
 				} catch (NumberFormatException e) {
 					DebugHandler.debugNumberFormat(e);
 				}

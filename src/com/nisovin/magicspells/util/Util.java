@@ -125,7 +125,7 @@ public class Util {
 			}
 			ItemTypeAndData itemTypeAndData = MagicSpells.getItemNameResolver().resolve(s);
 			if (itemTypeAndData != null) {
-				item = new ItemStack(itemTypeAndData.id, 1, itemTypeAndData.data);
+				item = new ItemStack(Material.getMaterial(itemTypeAndData.id_str), 1, itemTypeAndData.data);
 			} else {
 				return null;
 			}
@@ -744,11 +744,11 @@ public class Util {
 	}
 	
 	public static void createFire(Block block, byte d) {
-		block.setTypeIdAndData(Material.FIRE.getId(), d, false);
+		block.setType(Material.FIRE, false);
 	}
 	
 	public static ItemStack getEggItemForEntityType(EntityType type) {
-		ItemStack ret = new ItemStack(Material.MONSTER_EGG, 1);
+		ItemStack ret = new ItemStack(Material.EGG, 1);
 		ItemMeta meta = ret.getItemMeta();
 		if (meta instanceof SpawnEggMeta) {
 			((SpawnEggMeta) meta).setSpawnedType(type);

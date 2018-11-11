@@ -15,8 +15,8 @@ public interface ItemNameResolver {
 	MagicMaterial resolveBlock(String string);
 	
 	class ItemTypeAndData {
-		
-		public int id = 0;
+
+		public String id_str = "stone";
 		public short data = 0;
 		
 	}

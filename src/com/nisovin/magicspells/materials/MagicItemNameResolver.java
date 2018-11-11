@@ -69,11 +69,11 @@ public class MagicItemNameResolver implements ItemNameResolver {
 		if (string.contains(":")) {
 			String[] split = string.split(":");
 			if (RegexUtil.matches(DIGITS, split[0])) {
-				item.id = Integer.parseInt(split[0]);
+				item.id_str = split[0];
 			} else {
 				Material mat = Material.getMaterial(split[0].toUpperCase());
 				if (mat == null) return null;
-				item.id = mat.getId();
+				item.id_str = mat.toString();
 			}
 			if (RegexUtil.matches(DIGITS, split[1])) {
 				item.data = Short.parseShort(split[1]);
@@ -82,11 +82,11 @@ public class MagicItemNameResolver implements ItemNameResolver {
 			}
 		} else {
 			if (RegexUtil.matches(DIGITS, string)) {
-				item.id = Integer.parseInt(string);
+				item.id_str = string;
 			} else {
 				Material mat = Material.getMaterial(string.toUpperCase());
 				if (mat == null) return null;
-				item.id = mat.getId();
+				item.id_str = mat.toString();
 			}
 		}
 		return item;
@@ -206,12 +206,11 @@ public class MagicItemNameResolver implements ItemNameResolver {
 	
 	private MagicMaterial resolveUnknown(String stype, String sdata) {
 		try {
-			int type = Integer.parseInt(stype);
 			if (sdata.equals("*")) {
-				return new MagicUnknownAnyDataMaterial(type);
+				return new MagicUnknownAnyDataMaterial(stype);
 			} else {
 				short data = sdata.isEmpty() ? 0 : Short.parseShort(sdata);
-				return new MagicUnknownMaterial(type, data);
+				return new MagicUnknownMaterial(stype, data);
 			}
 		} catch (NumberFormatException e) {
 			DebugHandler.debugNumberFormat(e);
