@@ -508,11 +508,11 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                         if (itemsMatch) {
                                             if (entitiesNeedRemove.size() > 0) {
                                                 for (int i = entitiesNeedRemove.size() - 1; i >= 0; i--) {
-                                                    int amount = ((ItemStack)entitiesNeedRemove.get(i)).getAmount();
+                                                    int amount = ((Item)entitiesNeedRemove.get(i)).getItemStack().getAmount();
                                                     if (amount == entitiesNeedRemoveCount.get(i)) {
                                                         entitiesNeedRemove.get(i).remove();
                                                     } else {
-                                                        ((ItemStack)entitiesNeedRemove.get(i)).setAmount((amount - entitiesNeedRemoveCount.get(i)) > 0 ? amount - entitiesNeedRemoveCount.get(i) : 1);
+                                                        ((Item)entitiesNeedRemove.get(i)).getItemStack().setAmount((amount - entitiesNeedRemoveCount.get(i)) > 0 ? amount - entitiesNeedRemoveCount.get(i) : 1);
                                                     }
                                                 }
                                             }
