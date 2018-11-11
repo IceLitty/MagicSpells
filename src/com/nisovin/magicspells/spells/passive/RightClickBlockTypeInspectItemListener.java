@@ -455,6 +455,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                     if (noFireUnderOk) {
                                         boolean itemsMatch = false;
                                         List<Entity> entitiesNeedRemove = new ArrayList<>();
+                                        List<Integer> entitiesNeedRemoveCount = new ArrayList<>();
                                         if (recipe.isNoItemsMatchMode()) {
                                             itemsMatch = true;
                                         } else if (recipe.isNoItemsMatchButConsumeMode()) {
@@ -476,6 +477,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                                                 if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Predefine item matching: %dx%s ? %dx%s", recipe.getId(), recipe.getMatchMagicItems().get(i).getAmount(), recipe.getMatchMagicItems().get(i).getType(), tempItem.getItemStack().getAmount(), tempItem.getItemStack().getType()));
                                                                 if (tempItem.getItemStack().isSimilar(recipe.getMatchMagicItems().get(i)) && tempItem.getItemStack().getAmount() >= recipe.getMatchMagicItems().get(i).getAmount()) {
                                                                     entitiesNeedRemove.add(entities.get(j));
+                                                                    entitiesNeedRemoveCount.add(recipe.getMatchMagicItems().get(i).getAmount());
                                                                     entities.remove(j);
                                                                     tempPlaceholder.remove(i);
                                                                 }
@@ -483,6 +485,7 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                                                 if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Vanilla item matching: %dx%s ? %dx%s", recipe.getId(), recipe.getMatchNormalItemsCount().get(i), recipe.getMatchNormalItems().get(i), tempItem.getItemStack().getAmount(), tempItem.getItemStack().getType()));
                                                                 if (tempItem.getItemStack().getType().equals(recipe.getMatchNormalItems().get(i)) && tempItem.getItemStack().getAmount() >= recipe.getMatchNormalItemsCount().get(i)) {
                                                                     entitiesNeedRemove.add(entities.get(j));
+                                                                    entitiesNeedRemoveCount.add(recipe.getMatchNormalItemsCount().get(i));
                                                                     entities.remove(j);
                                                                     tempPlaceholder.remove(i);
                                                                 }
@@ -505,7 +508,12 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
                                         if (itemsMatch) {
                                             if (entitiesNeedRemove.size() > 0) {
                                                 for (int i = entitiesNeedRemove.size() - 1; i >= 0; i--) {
-                                                    entitiesNeedRemove.get(i).remove();
+                                                    int amount = ((ItemStack)entitiesNeedRemove.get(i)).getAmount();
+                                                    if (amount == entitiesNeedRemoveCount.get(i)) {
+                                                        entitiesNeedRemove.get(i).remove();
+                                                    } else {
+                                                        ((ItemStack)entitiesNeedRemove.get(i)).setAmount((amount - entitiesNeedRemoveCount.get(i)) > 0 ? amount - entitiesNeedRemoveCount.get(i) : 1);
+                                                    }
                                                 }
                                             }
                                             if (recipe.getPermissionStrings().size() > 0) {

@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.spelleffects;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.Particle;
 import org.bukkit.material.MaterialData;
@@ -36,29 +37,25 @@ import com.nisovin.magicspells.DebugHandler;
  */
 public class BlockBreakEffect extends SpellEffect {
 
-	int id = 1;
+	String id = "STONE";
 	int meta = 0;
 	
 	@Override
 	public void loadFromString(String string) {
 		if (string != null && !string.isEmpty()) {
-			try {
-				id = Integer.parseInt(string);
-			} catch (NumberFormatException e) {		
-				DebugHandler.debugNumberFormat(e);
-			}
+			id = string;
 		}
 	}
 
 	@Override
 	public void loadFromConfig(ConfigurationSection config) {
-		id = config.getInt("id", id);
+		id = config.getString("id", id);
         meta = config.getInt("meta", meta);
 	}
 	
 	@Override
 	public Runnable playEffectLocation(Location location) {
-        location.getWorld().spawnParticle(Particle.BLOCK_CRACK, location.add(0, 0.5, 0), 100, new MaterialData(id, (byte)meta));
+        location.getWorld().spawnParticle(Particle.BLOCK_CRACK, location.add(0, 0.5, 0), 100, new MaterialData(Material.getMaterial(id), (byte)meta));
 		return null;
 	}
 	
