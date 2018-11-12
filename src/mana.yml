@@ -33,6 +33,7 @@ show-mana-on-regen: false
 show-mana-on-wood-tool: false
 show-mana-on-hunger-bar: false
 show-mana-on-experience-bar: true
+show-mana-on-experience-bar-without-level: false
 tool-slot: 8
 
 mana-potion-cooldown: 30

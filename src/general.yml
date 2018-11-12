@@ -15,6 +15,7 @@ str-missing-reagents: You do not have the required reagents for that spell.
 str-cant-cast: You can't cast that spell right now.
 str-wrong-world: You cannot cast that spell here.
 str-console-name: Admin
+str-icy-fire-extinguished: Fire extinguishing!
 text-color: 3
 broadcast-range: 20
 spell-icon-slot: -1
