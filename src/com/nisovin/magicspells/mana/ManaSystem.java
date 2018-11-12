@@ -34,6 +34,7 @@ public class ManaSystem extends ManaHandler {
 	private boolean showManaOnWoodTool;
 	private boolean showManaOnHungerBar;
 	private boolean showManaOnExperienceBar;
+	private boolean showManaOnExperienceBarWithoutLevel;
 	
 	private List<String> modifierList;
 	private ModifierSet modifiers;
@@ -62,6 +63,7 @@ public class ManaSystem extends ManaHandler {
 		showManaOnWoodTool = config.getBoolean("mana.show-mana-on-wood-tool", true);
 		showManaOnHungerBar = config.getBoolean("mana.show-mana-on-hunger-bar", false);
 		showManaOnExperienceBar = config.getBoolean("mana.show-mana-on-experience-bar", false);
+		showManaOnExperienceBarWithoutLevel = config.getBoolean("mana.show-mana-on-experience-bar-without-level", false);
 
 		modifierList = config.getStringList("mana.modifiers", null);
 		
@@ -238,6 +240,7 @@ public class ManaSystem extends ManaHandler {
 		if (this.showManaOnWoodTool) showManaOnWoodTool(player, bar);
 		if (this.showManaOnHungerBar) showManaOnHungerBar(player, bar);
 		if (this.showManaOnExperienceBar) showManaOnExperienceBar(player, bar);
+		if (this.showManaOnExperienceBarWithoutLevel) showManaOnExperienceBarWithoutLevel(player, bar);
 	}
 	
 	@Override
@@ -285,9 +288,13 @@ public class ManaSystem extends ManaHandler {
 	private void showManaOnExperienceBar(Player player, ManaBar bar) {
 		MagicSpells.getExpBarManager().update(player, bar.getMana(), (float)bar.getMana()/(float)bar.getMaxMana());
 	}
+
+	private void showManaOnExperienceBarWithoutLevel(Player player, ManaBar bar) {
+		MagicSpells.getExpBarManager().update(player, player.getLevel(), (float)bar.getMana()/(float)bar.getMaxMana());
+	}
 	
 	public boolean usingExpBar() {
-		return this.showManaOnExperienceBar;
+		return this.showManaOnExperienceBar || this.showManaOnExperienceBarWithoutLevel;
 	}
 
 	@Override
