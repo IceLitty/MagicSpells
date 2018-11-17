@@ -136,10 +136,21 @@ public class CastCommand implements CommandExecutor, TabCompleter {
 					if (p != null) {
 						int amt = Integer.parseInt(args[2]);
 						plugin.mana.setMaxMana(p, amt);
+                        plugin.mana.showMana(p);
 						sender.sendMessage(plugin.textColor + p.getName() + "'s max mana set to " + amt + '.');
 					}
 					// End /c setmaxmana handling
-					
+
+				} else if (Perm.RESTORE_MAX_MANA.has(sender) && args[0].equalsIgnoreCase("restoremaxmana") && args.length == 2 && plugin.mana != null) {
+					// /c restoremaxmana
+					Player p = PlayerNameUtils.getPlayer(args[1]);
+					if (p != null) {
+						plugin.mana.restoreMaxMana(p);
+                        plugin.mana.showMana(p);
+						sender.sendMessage(plugin.textColor + p.getName() + "'s max mana restore from set max.");
+					}
+					// End /c restoremaxmana handling
+
 				} else if (Perm.MODIFY_MANA.has(sender) && args[0].equalsIgnoreCase("modifymana") && args.length == 3 && plugin.mana != null) {
 					// /c modifymana
 					Player p = PlayerNameUtils.getPlayer(args[1]);

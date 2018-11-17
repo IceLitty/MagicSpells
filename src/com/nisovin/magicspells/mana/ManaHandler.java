@@ -16,6 +16,8 @@ public abstract class ManaHandler {
 	public abstract int getMaxMana(Player player);
 	
 	public abstract void setMaxMana(Player player, int amount);
+
+	public abstract void restoreMaxMana(Player player);
 	
 	public abstract int getRegenAmount(Player player);
 	

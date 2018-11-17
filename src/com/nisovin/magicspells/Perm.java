@@ -23,6 +23,7 @@ public enum Perm {
 	MODIFY_VARIABLE(null, true),
 	MODIFY_MANA(null, true),
 	SET_MAX_MANA(null, true),
+	RESTORE_MAX_MANA(null, true),
 	UPDATE_MANA_RANK(null, true),
 	RESET_MANA(null, true),
 	SET_MANA(null, true),

@@ -43,6 +43,7 @@ public class ManaSystem extends ManaHandler {
 	private ArrayList<ManaRank> ranks;
 	
 	HashMap<String, ManaBar> manaBars;
+	HashMap<String, Integer> manaBarsMaxBackup;
 	
 	private int taskId = -1;
 
@@ -93,6 +94,7 @@ public class ManaSystem extends ManaHandler {
 		}
 		
 		this.manaBars = new HashMap<>();
+		this.manaBarsMaxBackup = new HashMap<>();
 		this.taskId = MagicSpells.scheduleRepeatingTask(new Regenerator(), this.regenInterval, this.regenInterval);
 	}
 	
@@ -156,17 +158,56 @@ public class ManaSystem extends ManaHandler {
 	// DEBUG INFO: level 3, rank found
 	// DEBUG INFO: level 3, no rank found
 	private ManaRank getRank(Player player) {
-		MagicSpells.debug(3, "Fetching mana rank for player " + player.getName() + "...");
-		for (ManaRank rank : this.ranks) {
-			MagicSpells.debug(3, "    checking rank " + rank.name);
-			if (player.hasPermission("magicspells.rank." + rank.name)) {
-				MagicSpells.debug(3, "    rank found");
-				return rank;
-			}
-		}
-		MagicSpells.debug(3, "    no rank found");
-		return this.defaultRank;
+	    ManaRank manaRank = getRankWithoutVirtual(player);
+		if (player.hasPermission("magicspells.virtualrank")) {
+            ManaRank virtualRank = new ManaRank();
+            virtualRank.name = "virtual_" + player.getName();
+            virtualRank.startingMana = manaRank.startingMana;
+            virtualRank.maxMana = manaRank.maxMana;
+            virtualRank.regenAmount = manaRank.regenAmount;
+            virtualRank.prefix = manaRank.prefix;
+            virtualRank.colorFull = manaRank.colorFull;
+            virtualRank.colorEmpty = manaRank.colorEmpty;
+            for (int maxManaValue = 1; maxManaValue <= 10000; maxManaValue++) {
+                if (player.hasPermission("magicspells.virtualrank." + maxManaValue)) {
+                    virtualRank.maxMana = maxManaValue;
+                    break;
+                }
+            }
+            manaRank = virtualRank;
+        }
+        if (player.hasPermission("magicspells.virtualrankregen")) {
+            ManaRank virtualRank = new ManaRank();
+            virtualRank.name = "virtual_" + player.getName();
+            virtualRank.startingMana = manaRank.startingMana;
+            virtualRank.maxMana = manaRank.maxMana;
+            virtualRank.regenAmount = manaRank.regenAmount;
+            virtualRank.prefix = manaRank.prefix;
+            virtualRank.colorFull = manaRank.colorFull;
+            virtualRank.colorEmpty = manaRank.colorEmpty;
+            for (int regenValue = 1; regenValue <= 10000; regenValue++) {
+                if (player.hasPermission("magicspells.virtualrankregen." + regenValue)) {
+                    virtualRank.regenAmount = regenValue;
+                    break;
+                }
+            }
+            manaRank = virtualRank;
+        }
+        return manaRank;
 	}
+
+	private ManaRank getRankWithoutVirtual(Player player) {
+        MagicSpells.debug(3, "Fetching mana rank for player " + player.getName() + "...");
+        for (ManaRank rank : this.ranks) {
+            MagicSpells.debug(3, "    checking rank " + rank.name);
+            if (player.hasPermission("magicspells.rank." + rank.name)) {
+                MagicSpells.debug(3, "    rank found");
+                return rank;
+            }
+        }
+        MagicSpells.debug(3, "    no rank found");
+        return this.defaultRank;
+    }
 
 	@Override
 	public int getMaxMana(Player player) {
@@ -178,8 +219,22 @@ public class ManaSystem extends ManaHandler {
 	@Override
 	public void setMaxMana(Player player, int amount) {
 		ManaBar bar = getManaBar(player);
-		if (bar != null) bar.setMaxMana(amount);
+		if (bar != null) {
+            manaBarsMaxBackup.remove(player.getName().toLowerCase());
+            manaBarsMaxBackup.put(player.getName().toLowerCase(), bar.getMaxMana());
+            bar.setMaxMana(amount);
+        }
 	}
+
+    @Override
+	public void restoreMaxMana(Player player) {
+        ManaBar bar = getManaBar(player);
+        int max = manaBarsMaxBackup.getOrDefault(player.getName().toLowerCase(), -1);
+        if (bar != null && max != -1) {
+            bar.setMaxMana(max);
+            manaBarsMaxBackup.remove(player.getName().toLowerCase());
+        }
+    }
 	
 	@Override
 	public int getRegenAmount(Player player) {
