@@ -54,6 +54,9 @@ import java.util.*;
 //  | pitch2                                                                        | null                              |
 //  | Specially player in an angel range, axis pitch.                               |                                   |
 //  +-------------------------------------------------------------------------------+-----------------------------------+
+//  | i invert invertYaw                                                            | 0 (false)                         |
+//  | Invert yaw judge result.                                                      |                                   |
+//  +-------------------------------------------------------------------------------+-----------------------------------+
 //  | b bt block blocks blockType blockTypes                                        | null                              |
 //  | Specially block under player.                                                 |                                   |
 //  +-------------------------------------------------------------------------------+-----------------------------------+
@@ -153,7 +156,14 @@ public class WalkListener extends PassiveListener {
                 }
                 case "yaw": {
                     try {
-                        recipe.setYaw(Float.parseFloat(kvList[1]));
+                        float yaw = Float.parseFloat(kvList[1]);
+                        while (yaw < 0) {
+                            yaw += 360.0f;
+                        }
+                        while (yaw > 360.0f) {
+                            yaw -= 360.0f;
+                        }
+                        recipe.setYaw(yaw);
                     } catch (Exception e) { MagicSpells.error(String.format("%s In register seems Yaw is not a float number.", moduleLogPrefix)); continue; }
                     break;
                 }
@@ -166,11 +176,17 @@ public class WalkListener extends PassiveListener {
                 case "yaw2": {
                     try {
                         float a2 = Float.parseFloat(kvList[1]);
+                        while (a2 < 0) {
+                            a2 += 360.0f;
+                        }
+                        while (a2 > 360.0f) {
+                            a2 -= 360.0f;
+                        }
                         if (recipe.getYaw() == null) {
                             recipe.setYaw(a2);
                         } else {
                             if (a2 < recipe.getYaw()) {
-                                recipe.setYaw2(recipe.getYaw() + 0.0f);
+                                recipe.setYaw2(recipe.getYaw());
                                 recipe.setYaw(a2);
                             } else {
                                 recipe.setYaw2(a2);
@@ -193,6 +209,12 @@ public class WalkListener extends PassiveListener {
                             }
                         }
                     } catch (Exception e) { MagicSpells.error(String.format("%s In register seems Pitch2 is not a float number.", moduleLogPrefix)); continue; }
+                    break;
+                }
+                case "i":
+                case "invert":
+                case "invertYaw": {
+                    recipe.setInvertYaw(kvList[1].equals("1"));
                     break;
                 }
                 case "b":
@@ -228,7 +250,15 @@ public class WalkListener extends PassiveListener {
 	@OverridePriority
 	@EventHandler
 	public void onWalkOverBlockEvent(PlayerMoveEvent event) {
-		List<PassiveSpell> list = getSpells(event.getPlayer(), new Location(event.getPlayer().getLocation().getWorld(), event.getPlayer().getLocation().getBlockX(), event.getPlayer().getLocation().getBlockY(), event.getPlayer().getLocation().getBlockZ(), event.getPlayer().getLocation().getYaw(), event.getPlayer().getLocation().getPitch()));
+	    float yaw = event.getPlayer().getLocation().getYaw();
+        while (yaw < 0) {
+            yaw += 360.0f;
+        }
+        while (yaw > 360.0f) {
+            yaw -= 360.0f;
+        }
+	    float pitch = event.getPlayer().getLocation().getPitch();
+		List<PassiveSpell> list = getSpells(event.getPlayer(), new Location(event.getPlayer().getLocation().getWorld(), event.getPlayer().getLocation().getBlockX(), event.getPlayer().getLocation().getBlockY(), event.getPlayer().getLocation().getBlockZ(), yaw, pitch));
 		if (list.size() > 0) {
 			Spellbook spellbook = MagicSpells.getSpellbook(event.getPlayer());
 			for (PassiveSpell spell : list) {
@@ -288,6 +318,10 @@ public class WalkListener extends PassiveListener {
                                 if (betweenAngel(recipe.getYaw(), recipe.getYaw2(), position.getYaw())) {
                                     yawFlag = true;
                                 }
+                            }
+                            if (recipe.isInvertYaw()) {
+                                yawFlag = !yawFlag;
+                                if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: yaw flag invert: %s", yawFlag)); }
                             }
                         }
                         if (yawFlag) {
@@ -377,6 +411,7 @@ public class WalkListener extends PassiveListener {
 	    private Float pitch;
         private Float yaw2;
 	    private Float pitch2;
+	    private boolean invertYaw = false;
         private List<MagicMaterial> blockTypes = new ArrayList<>();
         private boolean includeAir = false;
         private List<PassiveSpell> skills = new ArrayList<>();
@@ -475,6 +510,14 @@ public class WalkListener extends PassiveListener {
 
         public void setPitch2(Float pitch2) {
             this.pitch2 = pitch2;
+        }
+
+        public boolean isInvertYaw() {
+            return invertYaw;
+        }
+
+        public void setInvertYaw(boolean invertYaw) {
+            this.invertYaw = invertYaw;
         }
 
         public List<MagicMaterial> getBlockTypes() {
