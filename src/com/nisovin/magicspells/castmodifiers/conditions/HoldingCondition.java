@@ -15,7 +15,7 @@ import java.util.Objects;
 
 public class HoldingCondition extends Condition {
 
-	int[] ids;
+	String[] ids;
 	short[] datas;
 	boolean[] checkData;
 	String[] names;
@@ -25,7 +25,7 @@ public class HoldingCondition extends Condition {
 	public boolean setVar(String var) {
 		try {
 			String[] vardata = var.split(",");
-			ids = new int[vardata.length];
+			ids = new String[vardata.length];
 			datas = new short[vardata.length];
 			checkData = new boolean[vardata.length];
 			names = new String[vardata.length];
@@ -43,7 +43,7 @@ public class HoldingCondition extends Condition {
 				}
 				if (vardata[i].contains(":")) {
 					String[] subvardata = vardata[i].split(":");
-					ids[i] = Integer.parseInt(subvardata[0]);
+					ids[i] = subvardata[0];
 					if (subvardata[1].equals("*")) {
 						datas[i] = 0;
 						checkData[i] = false;
@@ -52,7 +52,7 @@ public class HoldingCondition extends Condition {
 						checkData[i] = true;
 					}
 				} else {
-					ids[i] = Integer.parseInt(vardata[i]);
+					ids[i] = vardata[i];
 					datas[i] = 0;
 					checkData[i] = false;
 				}
@@ -83,7 +83,7 @@ public class HoldingCondition extends Condition {
 	
 	private boolean check(ItemStack item) {
 		if (item == null) return false;
-		int thisid = item.getTypeId();
+		String thisid = item.getType().toString();
 		short thisdata = item.getDurability();
 		String thisname = null;
 		try {
@@ -94,7 +94,7 @@ public class HoldingCondition extends Condition {
 			DebugHandler.debugGeneral(e);
 		}
 		for (int i = 0; i < ids.length; i++) {
-			if (ids[i] == thisid && (!checkData[i] || datas[i] == thisdata) && (!checkName[i] || Objects.equals(names[i], thisname))) {
+			if (ids[i].equalsIgnoreCase(thisid) && (!checkData[i] || datas[i] == thisdata) && (!checkName[i] || Objects.equals(names[i], thisname))) {
 				return true;
 			}
 		}
