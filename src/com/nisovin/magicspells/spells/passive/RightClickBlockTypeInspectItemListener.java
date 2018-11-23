@@ -404,6 +404,9 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
             else if (recipe.getAction() == action) actionOk = true;
             if (actionOk) {
                 boolean permOk = true;
+                if (!player.hasPermission("magicspells.cast." + recipe.getSkills().get(0).getPermissionName())) {
+                    permOk = false;
+                }
                 if (recipe.getPermissionStrings().size() > 0) {
                     for (String perm : recipe.getPermissionStrings()) {
                         if (!player.hasPermission(perm)) {

@@ -64,7 +64,8 @@ public class PassiveTrigger {
 	public static Set<PassiveTrigger> TELEPORT = addTriggers("teleport", TeleportListener.class);
 	public static Set<PassiveTrigger> BUFF = addTriggers("buff", BuffListener.class);
 	public static Set<PassiveTrigger> TICKS = addTriggers("ticks", TicksListener.class);
-	
+	public static Set<PassiveTrigger> WALK = addTriggers("walk", WalkListener.class);
+
 	// can't do priorities here
 	public static PassiveTrigger RESOURCE_PACK = addTrigger("resourcepack", ResourcePackListener.class);
 	
