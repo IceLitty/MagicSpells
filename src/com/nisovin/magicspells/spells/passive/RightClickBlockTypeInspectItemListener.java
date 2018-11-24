@@ -398,332 +398,333 @@ public class RightClickBlockTypeInspectItemListener extends PassiveListener {
 
     private List<PassiveSpell> getSpells(Block block, Location location, RightClickBlockTypeInspectItemListenerEnumAction action, Player player) {
         for (RightClickBlockTypeInspectItemListenerClass recipe : recipes) {
-            if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] === Start process ===============================================", recipe.getId()));
-            boolean actionOk = false;
-            if (recipe.getAction() == RightClickBlockTypeInspectItemListenerEnumAction.Action2_RightOrLeftClickBlock) actionOk = true;
-            else if (recipe.getAction() == action) actionOk = true;
-            if (actionOk) {
-                boolean permOk = true;
-                if (!player.hasPermission("magicspells.cast." + recipe.getSkills().get(0).getPermissionName())) {
-                    permOk = false;
-                }
-                if (recipe.getPermissionStrings().size() > 0) {
-                    for (String perm : recipe.getPermissionStrings()) {
-                        if (!player.hasPermission(perm)) {
-                            permOk = false;
-                        }
-                    }
-                }
-                if (permOk) {
-                    boolean worldOk = false;
-                    if (recipe.getWorldName().size() > 0) {
-                        String worldName = location.getWorld().getName();
-                        if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] World name matching: %s ? %s", recipe.getId(), recipe.getWorldName(), worldName));
-                        for (String world : recipe.getWorldName()) {
-                            if ("*".equals(world)) {
-                                worldOk = true;
-                                break;
-                            } else if (world.equals(worldName)) {
-                                worldOk = true;
-                                break;
-                            }
-                        }
-                    } else worldOk = true;
-                    if (worldOk) {
-                        boolean blockTypeOk = false;
-                        for (MagicMaterial actionBlock : recipe.getActionBlocks()) {
-                            if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Player block: %s:%d, require block: %s:%d", recipe.getId(), block.getType(), block.getState().getData().getData(), actionBlock.getMaterial().name(), actionBlock.getMaterialData().getData()));
-                            if (actionBlock.equals(block.getState().getData())) {
-                                blockTypeOk = true;
-                                boolean fireUnderOk = false;
-                                Block blockUnder = block.getWorld().getBlockAt(block.getLocation().add(0, -1, 0));
-                                if (recipe.isFireBlockUnder()) {
-                                    if (blockUnder.getType() == Material.FIRE || blockUnder.getType() == Material.LAVA || blockUnder.getType() == Material.STATIONARY_LAVA || blockUnder.getType() == Material.MAGMA) {
-                                        fireUnderOk = true;
-                                    }
-                                } else {
-                                    if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Fire block under is not required, skip.", recipe.getId()));
-                                    fireUnderOk = true;
+            if (player.hasPermission("magicspells.cast." + recipe.getSkills().get(0).getPermissionName())) {
+                if (recipe.getSkills().get(0).getCooldown(player) <= 0) {
+                    if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] === Start process ===============================================", recipe.getId()));
+                    boolean actionOk = false;
+                    if (recipe.getAction() == RightClickBlockTypeInspectItemListenerEnumAction.Action2_RightOrLeftClickBlock) actionOk = true;
+                    else if (recipe.getAction() == action) actionOk = true;
+                    if (actionOk) {
+                        boolean permOk = true;
+                        if (recipe.getPermissionStrings().size() > 0) {
+                            for (String perm : recipe.getPermissionStrings()) {
+                                if (!player.hasPermission(perm)) {
+                                    permOk = false;
                                 }
-                                if (fireUnderOk) {
-                                    boolean noFireUnderOk = false;
-                                    if (recipe.isNoFireBlockUnder()) {
-                                        if (blockUnder.getType() != Material.FIRE && blockUnder.getType() != Material.LAVA && blockUnder.getType() != Material.STATIONARY_LAVA && blockUnder.getType() != Material.MAGMA) {
-                                            noFireUnderOk = true;
-                                        }
-                                    } else {
-                                        if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] No fire block under is not required, skip.", recipe.getId()));
-                                        noFireUnderOk = true;
-                                    }
-                                    if (noFireUnderOk) {
-                                        boolean itemsMatch = false;
-                                        List<Entity> entitiesNeedRemove = new ArrayList<>();
-                                        List<Integer> entitiesNeedRemoveCount = new ArrayList<>();
-                                        if (recipe.isNoItemsMatchMode()) {
-                                            itemsMatch = true;
-                                        } else if (recipe.isNoItemsMatchButConsumeMode()) {
-                                            List<Entity> entities = new ArrayList<>(location.getWorld().getNearbyEntities(location, recipe.getItemRange(), recipe.getItemRange(), recipe.getItemRange()));
-                                            for (Entity entity : entities) {
-                                                entity.remove();
-                                            }
-                                            itemsMatch = true;
-                                        } else {
-                                            List<Entity> entities = new ArrayList<>(location.getWorld().getNearbyEntities(location, recipe.getItemRange(), recipe.getItemRange(), recipe.getItemRange()));
-                                            if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] x %d, y %d, z %d, r %f, e %d", recipe.getId(), block.getX(), block.getY(), block.getZ(), recipe.getItemRange(), entities.size()));
-                                            List<Boolean> tempPlaceholder = new ArrayList<>(recipe.getPredefineItems());
-                                            if (recipe.getPredefineItems().size() > 0 && entities.size() > 0) {
-                                                for (int i = recipe.getPredefineItems().size() - 1; i >= 0; i--) {
-                                                    for (int j = entities.size() - 1; j >= 0; j--) {
-                                                        if (entities.get(j) instanceof Item) {
-                                                            Item tempItem = (Item) entities.get(j);
-                                                            if (recipe.getPredefineItems().get(i)) {
-                                                                if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Predefine item matching: %dx%s ? %dx%s", recipe.getId(), recipe.getMatchMagicItems().get(i).getAmount(), recipe.getMatchMagicItems().get(i).getType(), tempItem.getItemStack().getAmount(), tempItem.getItemStack().getType()));
-                                                                if (tempItem.getItemStack().isSimilar(recipe.getMatchMagicItems().get(i)) && tempItem.getItemStack().getAmount() >= recipe.getMatchMagicItems().get(i).getAmount()) {
-                                                                    entitiesNeedRemove.add(entities.get(j));
-                                                                    entitiesNeedRemoveCount.add(recipe.getMatchMagicItems().get(i).getAmount());
-                                                                    entities.remove(j);
-                                                                    tempPlaceholder.remove(i);
-                                                                }
-                                                            } else {
-                                                                if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Vanilla item matching: %dx%s ? %dx%s", recipe.getId(), recipe.getMatchNormalItemsCount().get(i), recipe.getMatchNormalItems().get(i), tempItem.getItemStack().getAmount(), tempItem.getItemStack().getType()));
-                                                                if (tempItem.getItemStack().getType().equals(recipe.getMatchNormalItems().get(i)) && tempItem.getItemStack().getAmount() >= recipe.getMatchNormalItemsCount().get(i)) {
-                                                                    entitiesNeedRemove.add(entities.get(j));
-                                                                    entitiesNeedRemoveCount.add(recipe.getMatchNormalItemsCount().get(i));
-                                                                    entities.remove(j);
-                                                                    tempPlaceholder.remove(i);
-                                                                }
-                                                            }
-                                                        } else entities.remove(entities.get(j));
-                                                    }
-                                                }
-                                            }
-                                            if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Item matching list size: %d entities, %d need remove, %d placeholders.", recipe.getId(), entities.size(), entitiesNeedRemove.size(), tempPlaceholder.size()));
-                                            if (tempPlaceholder.size() == 0) {
-                                                if (recipe.isItemRangeRestrictMode()) {
-                                                    if (entities.size() == 0) {
-                                                        itemsMatch = true;
-                                                    }
-                                                } else {
-                                                    itemsMatch = true;
-                                                }
-                                            }
-                                        }
-                                        if (itemsMatch) {
-                                            if (entitiesNeedRemove.size() > 0) {
-                                                for (int i = entitiesNeedRemove.size() - 1; i >= 0; i--) {
-                                                    int amount = ((Item)entitiesNeedRemove.get(i)).getItemStack().getAmount();
-                                                    if (amount == entitiesNeedRemoveCount.get(i)) {
-                                                        entitiesNeedRemove.get(i).remove();
-                                                    } else {
-                                                        ((Item)entitiesNeedRemove.get(i)).getItemStack().setAmount((amount - entitiesNeedRemoveCount.get(i)) > 0 ? amount - entitiesNeedRemoveCount.get(i) : 1);
-                                                    }
-                                                }
-                                            }
-                                            if (recipe.getPermissionStrings().size() > 0) {
-                                                for (String perm : recipe.getPermissionStrings()) {
-                                                    MagicSpells.plugin.getServer().dispatchCommand(MagicSpells.plugin.getServer().getConsoleSender(), deletePermissionCommand.replace("%a", player.getName()).replace("<permission>", perm));
-                                                }
-                                                if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Permissions %s removed.", recipe.getId(), String.join(",", recipe.getPermissionStrings())));
-                                            }
-                                            boolean fireUnderCheat = false;
-                                            if (recipe.isFireBlockUnder()) {
-                                                int rdm = new Random().nextInt(100);
-                                                boolean alive = true;
-                                                String str = MagicSpells.plugin.getMagicConfig().getString("general.str-icy-fire-extinguished", "");
-                                                if (blockUnder.getType() == Material.FIRE) {
-                                                    if (rdm < recipe.getFireBlockExtinguishChance_fire() * 100) {
-                                                        blockUnder.breakNaturally();
-                                                        if (!str.isEmpty()) player.sendMessage(str);
-                                                        alive = false;
-                                                    }
-                                                } else if (blockUnder.getType() == Material.LAVA || blockUnder.getType() == Material.STATIONARY_LAVA) {
-                                                    if (rdm < recipe.getFireBlockExtinguishChance_lava() * 100) {
-                                                        blockUnder.breakNaturally();
-                                                        blockUnder.setType(Material.COBBLESTONE);
-                                                        if (!str.isEmpty()) player.sendMessage(str);
-                                                        alive = false;
-                                                    }
-                                                } else if (blockUnder.getType() == Material.MAGMA) {
-                                                    if (rdm < recipe.getFireBlockExtinguishChance_magma() * 100) {
-                                                        blockUnder.breakNaturally();
-                                                        blockUnder.setType(Material.NETHER_BRICK);
-                                                        if (!str.isEmpty()) player.sendMessage(str);
-                                                        alive = false;
-                                                    }
-                                                } else fireUnderCheat = true;
-                                                if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Fire random: %d/100 | %s", recipe.getId(), rdm, alive ? "alive" : "extinguished"));
-                                            }
-                                            if (!fireUnderCheat) {
-                                                if (recipe.getBlockModifyMode() != RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode0_NoModify) {
-                                                    int originalMeta = block.getState().getData().getData();
-                                                    float chance = recipe.getBlockModifyChance();
-                                                    int multi = (int) Math.floor(chance);
-                                                    chance -= multi;
-                                                    if (new Random().nextInt(100) < chance * 100) {
-                                                        multi++;
-                                                    }
-                                                    for (int i = 0; i < multi; i++) {
-                                                        if (block.getState().getType().equals(Material.CAULDRON)) {
-                                                            if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode1_ReduceMeta) {
-                                                                if (block.getState().getData().getData() > 0) {
-                                                                    block.setData((byte) (block.getState().getData().getData() - 1));
-                                                                }
-                                                            } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode2_IncreaseMeta) {
-                                                                if (block.getState().getData().getData() < 3) {
-                                                                    block.setData((byte) (block.getState().getData().getData() + 1));
-                                                                }
-                                                            }
-                                                        } else if (block.getState().getType().equals(Material.SNOW)) {
-                                                            if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode1_ReduceMeta || recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode3_ReduceAndDestroyMeta) {
-                                                                if (block.getState().getData().getData() > 1) {
-                                                                    block.setData((byte) (block.getState().getData().getData() - 1));
-                                                                } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode3_ReduceAndDestroyMeta) {
-                                                                    block.setType(Material.AIR);
-                                                                }
-                                                            } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode2_IncreaseMeta) {
-                                                                if (block.getState().getData().getData() < 8) {
-                                                                    block.setData((byte) (block.getState().getData().getData() + 1));
-                                                                }
-                                                            }
-                                                        } else if (block.getState().getType().equals(Material.ENDER_PORTAL_FRAME)) {
-                                                            if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode1_ReduceMeta) {
-                                                                switch (block.getState().getData().getData()) {
-                                                                    case 4:
-                                                                        block.setData((byte) 0);
-                                                                        break;
-                                                                    case 5:
-                                                                        block.setData((byte) 1);
-                                                                        break;
-                                                                    case 6:
-                                                                        block.setData((byte) 2);
-                                                                        break;
-                                                                    case 7:
-                                                                        block.setData((byte) 3);
-                                                                        break;
-                                                                }
-                                                            } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode2_IncreaseMeta) {
-                                                                switch (block.getState().getData().getData()) {
-                                                                    case 0:
-                                                                        block.setData((byte) 4);
-                                                                        break;
-                                                                    case 1:
-                                                                        block.setData((byte) 5);
-                                                                        break;
-                                                                    case 2:
-                                                                        block.setData((byte) 6);
-                                                                        break;
-                                                                    case 3:
-                                                                        block.setData((byte) 7);
-                                                                        break;
-                                                                }
-                                                            }
-                                                        } else if (block.getState().getType().equals(Material.ANVIL)) {
-                                                            if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode1_ReduceMeta || recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode3_ReduceAndDestroyMeta) {
-                                                                switch (block.getState().getData().getData()) {
-                                                                    case 0:
-                                                                        block.setData((byte) 4);
-                                                                        break;
-                                                                    case 1:
-                                                                        block.setData((byte) 5);
-                                                                        break;
-                                                                    case 2:
-                                                                        block.setData((byte) 6);
-                                                                        break;
-                                                                    case 3:
-                                                                        block.setData((byte) 7);
-                                                                        break;
-                                                                    case 4:
-                                                                        block.setData((byte) 8);
-                                                                        break;
-                                                                    case 5:
-                                                                        block.setData((byte) 9);
-                                                                        break;
-                                                                    case 6:
-                                                                        block.setData((byte) 10);
-                                                                        break;
-                                                                    case 7:
-                                                                        block.setData((byte) 11);
-                                                                        break;
-                                                                }
-                                                                if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode3_ReduceAndDestroyMeta) {
-                                                                    switch (block.getState().getData().getData()) {
-                                                                        case 8:
-                                                                        case 9:
-                                                                        case 10:
-                                                                        case 11:
-                                                                            block.setType(Material.AIR);
-                                                                            break;
-                                                                    }
-                                                                }
-                                                            } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode2_IncreaseMeta) {
-                                                                switch (block.getState().getData().getData()) {
-                                                                    case 11:
-                                                                        block.setData((byte) 7);
-                                                                        break;
-                                                                    case 10:
-                                                                        block.setData((byte) 6);
-                                                                        break;
-                                                                    case 9:
-                                                                        block.setData((byte) 5);
-                                                                        break;
-                                                                    case 8:
-                                                                        block.setData((byte) 4);
-                                                                        break;
-                                                                    case 7:
-                                                                        block.setData((byte) 3);
-                                                                        break;
-                                                                    case 6:
-                                                                        block.setData((byte) 2);
-                                                                        break;
-                                                                    case 5:
-                                                                        block.setData((byte) 1);
-                                                                        break;
-                                                                    case 4:
-                                                                        block.setData((byte) 0);
-                                                                        break;
-                                                                }
-                                                            }
-                                                        } else if (block.getState().getType().equals(Material.PUMPKIN)) {
-                                                            block.setType(Material.JACK_O_LANTERN);
-                                                        } else if (block.getState().getType().equals(Material.JACK_O_LANTERN)) {
-                                                            block.setType(Material.PUMPKIN);
-                                                        }
-                                                    }
-                                                    if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Block meta changed from %d to %d.", recipe.getId(), originalMeta, block.getState().getData().getData()));
-                                                }
-                                                if (recipe.getGiveExpValue() >= 0) {
-                                                    int delayMulti = (recipe.getGiveExpTimerEnd() - recipe.getGiveExpTimerStart()) / recipe.getGiveExpCount();
-                                                    Location locadd = block.getLocation();
-                                                    locadd.setY(locadd.getBlockY() + 1);
-                                                    locadd.setX(locadd.getBlockX() + 0.5);
-                                                    locadd.setZ(locadd.getBlockZ() + 0.5);
-                                                    for (int i = 0; i < recipe.getGiveExpCount(); i++) {
-                                                        if (i == recipe.getGiveExpCount() - 1) {
-                                                            MagicSpells.plugin.getServer().getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> {
-                                                                ExperienceOrb exporb = (ExperienceOrb) block.getWorld().spawnEntity(locadd, EntityType.EXPERIENCE_ORB);
-                                                                exporb.setExperience(recipe.getGiveExpValue());
-                                                            }, recipe.getGiveExpTimerStart() + (i * delayMulti));
-                                                        } else {
-                                                            MagicSpells.plugin.getServer().getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> {
-                                                                ExperienceOrb exporb = (ExperienceOrb) block.getWorld().spawnEntity(locadd, EntityType.EXPERIENCE_ORB);
-                                                                exporb.setExperience(0);
-                                                            }, recipe.getGiveExpTimerStart() + (i * delayMulti));
-                                                        }
-                                                    }
-                                                    if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Summon %d orbs in %d ticks, all of them are %d exp.", recipe.getId(), recipe.getGiveExpCount(), recipe.getGiveExpTimerEnd() - recipe.getGiveExpTimerStart(), recipe.getGiveExpValue()));
-                                                }
-                                                if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] =========================================== Run successfully! ===", recipe.getId()));
-                                                return recipe.getSkills();
-                                            } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Run failed item consumed because who remove fire block first! ===", recipe.getId()));
-                                        } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ===================== Run failed because items are not match! ===", recipe.getId()));
-                                    } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] =========== Run failed because need no fire block under that! ===", recipe.getId()));
-                                } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ========== Run failed because need any fire block under that! ===", recipe.getId()));
-                                break;
                             }
-                        } if (!blockTypeOk) if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ========= Run failed because clicked block type is not match! ===", recipe.getId()));
-                    } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ================= Run failed because world name is not match! ===", recipe.getId()));
-                } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ============= Run failed because permission player not have! ===", recipe.getId()));
-            } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ===================== Run failed because action is not equal! ===", recipe.getId()));
+                        }
+                        if (permOk) {
+                            boolean worldOk = false;
+                            if (recipe.getWorldName().size() > 0) {
+                                String worldName = location.getWorld().getName();
+                                if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] World name matching: %s ? %s", recipe.getId(), recipe.getWorldName(), worldName));
+                                for (String world : recipe.getWorldName()) {
+                                    if ("*".equals(world)) {
+                                        worldOk = true;
+                                        break;
+                                    } else if (world.equals(worldName)) {
+                                        worldOk = true;
+                                        break;
+                                    }
+                                }
+                            } else worldOk = true;
+                            if (worldOk) {
+                                boolean blockTypeOk = false;
+                                for (MagicMaterial actionBlock : recipe.getActionBlocks()) {
+                                    if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Player block: %s:%d, require block: %s:%d", recipe.getId(), block.getType(), block.getState().getData().getData(), actionBlock.getMaterial().name(), actionBlock.getMaterialData().getData()));
+                                    if (actionBlock.equals(block.getState().getData())) {
+                                        blockTypeOk = true;
+                                        boolean fireUnderOk = false;
+                                        Block blockUnder = block.getWorld().getBlockAt(block.getLocation().add(0, -1, 0));
+                                        if (recipe.isFireBlockUnder()) {
+                                            if (blockUnder.getType() == Material.FIRE || blockUnder.getType() == Material.LAVA || blockUnder.getType() == Material.STATIONARY_LAVA || blockUnder.getType() == Material.MAGMA) {
+                                                fireUnderOk = true;
+                                            }
+                                        } else {
+                                            if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Fire block under is not required, skip.", recipe.getId()));
+                                            fireUnderOk = true;
+                                        }
+                                        if (fireUnderOk) {
+                                            boolean noFireUnderOk = false;
+                                            if (recipe.isNoFireBlockUnder()) {
+                                                if (blockUnder.getType() != Material.FIRE && blockUnder.getType() != Material.LAVA && blockUnder.getType() != Material.STATIONARY_LAVA && blockUnder.getType() != Material.MAGMA) {
+                                                    noFireUnderOk = true;
+                                                }
+                                            } else {
+                                                if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] No fire block under is not required, skip.", recipe.getId()));
+                                                noFireUnderOk = true;
+                                            }
+                                            if (noFireUnderOk) {
+                                                boolean itemsMatch = false;
+                                                List<Entity> entitiesNeedRemove = new ArrayList<>();
+                                                List<Integer> entitiesNeedRemoveCount = new ArrayList<>();
+                                                if (recipe.isNoItemsMatchMode()) {
+                                                    itemsMatch = true;
+                                                } else if (recipe.isNoItemsMatchButConsumeMode()) {
+                                                    List<Entity> entities = new ArrayList<>(location.getWorld().getNearbyEntities(location, recipe.getItemRange(), recipe.getItemRange(), recipe.getItemRange()));
+                                                    for (Entity entity : entities) {
+                                                        entity.remove();
+                                                    }
+                                                    itemsMatch = true;
+                                                } else {
+                                                    List<Entity> entities = new ArrayList<>(location.getWorld().getNearbyEntities(location, recipe.getItemRange(), recipe.getItemRange(), recipe.getItemRange()));
+                                                    if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] x %d, y %d, z %d, r %f, e %d", recipe.getId(), block.getX(), block.getY(), block.getZ(), recipe.getItemRange(), entities.size()));
+                                                    List<Boolean> tempPlaceholder = new ArrayList<>(recipe.getPredefineItems());
+                                                    if (recipe.getPredefineItems().size() > 0 && entities.size() > 0) {
+                                                        for (int i = recipe.getPredefineItems().size() - 1; i >= 0; i--) {
+                                                            for (int j = entities.size() - 1; j >= 0; j--) {
+                                                                if (entities.get(j) instanceof Item) {
+                                                                    Item tempItem = (Item) entities.get(j);
+                                                                    if (recipe.getPredefineItems().get(i)) {
+                                                                        if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Predefine item matching: %dx%s ? %dx%s", recipe.getId(), recipe.getMatchMagicItems().get(i).getAmount(), recipe.getMatchMagicItems().get(i).getType(), tempItem.getItemStack().getAmount(), tempItem.getItemStack().getType()));
+                                                                        if (tempItem.getItemStack().isSimilar(recipe.getMatchMagicItems().get(i)) && tempItem.getItemStack().getAmount() >= recipe.getMatchMagicItems().get(i).getAmount()) {
+                                                                            entitiesNeedRemove.add(entities.get(j));
+                                                                            entitiesNeedRemoveCount.add(recipe.getMatchMagicItems().get(i).getAmount());
+                                                                            entities.remove(j);
+                                                                            tempPlaceholder.remove(i);
+                                                                        }
+                                                                    } else {
+                                                                        if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Vanilla item matching: %dx%s ? %dx%s", recipe.getId(), recipe.getMatchNormalItemsCount().get(i), recipe.getMatchNormalItems().get(i), tempItem.getItemStack().getAmount(), tempItem.getItemStack().getType()));
+                                                                        if (tempItem.getItemStack().getType().equals(recipe.getMatchNormalItems().get(i)) && tempItem.getItemStack().getAmount() >= recipe.getMatchNormalItemsCount().get(i)) {
+                                                                            entitiesNeedRemove.add(entities.get(j));
+                                                                            entitiesNeedRemoveCount.add(recipe.getMatchNormalItemsCount().get(i));
+                                                                            entities.remove(j);
+                                                                            tempPlaceholder.remove(i);
+                                                                        }
+                                                                    }
+                                                                } else entities.remove(entities.get(j));
+                                                            }
+                                                        }
+                                                    }
+                                                    if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Item matching list size: %d entities, %d need remove, %d placeholders.", recipe.getId(), entities.size(), entitiesNeedRemove.size(), tempPlaceholder.size()));
+                                                    if (tempPlaceholder.size() == 0) {
+                                                        if (recipe.isItemRangeRestrictMode()) {
+                                                            if (entities.size() == 0) {
+                                                                itemsMatch = true;
+                                                            }
+                                                        } else {
+                                                            itemsMatch = true;
+                                                        }
+                                                    }
+                                                }
+                                                if (itemsMatch) {
+                                                    if (entitiesNeedRemove.size() > 0) {
+                                                        for (int i = entitiesNeedRemove.size() - 1; i >= 0; i--) {
+                                                            int amount = ((Item)entitiesNeedRemove.get(i)).getItemStack().getAmount();
+                                                            if (amount == entitiesNeedRemoveCount.get(i)) {
+                                                                entitiesNeedRemove.get(i).remove();
+                                                            } else {
+                                                                ((Item)entitiesNeedRemove.get(i)).getItemStack().setAmount((amount - entitiesNeedRemoveCount.get(i)) > 0 ? amount - entitiesNeedRemoveCount.get(i) : 1);
+                                                            }
+                                                        }
+                                                    }
+                                                    if (recipe.getPermissionStrings().size() > 0) {
+                                                        for (String perm : recipe.getPermissionStrings()) {
+                                                            MagicSpells.plugin.getServer().dispatchCommand(MagicSpells.plugin.getServer().getConsoleSender(), deletePermissionCommand.replace("%a", player.getName()).replace("<permission>", perm));
+                                                        }
+                                                        if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Permissions %s removed.", recipe.getId(), String.join(",", recipe.getPermissionStrings())));
+                                                    }
+                                                    boolean fireUnderCheat = false;
+                                                    if (recipe.isFireBlockUnder()) {
+                                                        int rdm = new Random().nextInt(100);
+                                                        boolean alive = true;
+                                                        String str = MagicSpells.plugin.getMagicConfig().getString("general.str-icy-fire-extinguished", "");
+                                                        if (blockUnder.getType() == Material.FIRE) {
+                                                            if (rdm < recipe.getFireBlockExtinguishChance_fire() * 100) {
+                                                                blockUnder.breakNaturally();
+                                                                if (!str.isEmpty()) player.sendMessage(str);
+                                                                alive = false;
+                                                            }
+                                                        } else if (blockUnder.getType() == Material.LAVA || blockUnder.getType() == Material.STATIONARY_LAVA) {
+                                                            if (rdm < recipe.getFireBlockExtinguishChance_lava() * 100) {
+                                                                blockUnder.breakNaturally();
+                                                                blockUnder.setType(Material.COBBLESTONE);
+                                                                if (!str.isEmpty()) player.sendMessage(str);
+                                                                alive = false;
+                                                            }
+                                                        } else if (blockUnder.getType() == Material.MAGMA) {
+                                                            if (rdm < recipe.getFireBlockExtinguishChance_magma() * 100) {
+                                                                blockUnder.breakNaturally();
+                                                                blockUnder.setType(Material.NETHER_BRICK);
+                                                                if (!str.isEmpty()) player.sendMessage(str);
+                                                                alive = false;
+                                                            }
+                                                        } else fireUnderCheat = true;
+                                                        if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Fire random: %d/100 | %s", recipe.getId(), rdm, alive ? "alive" : "extinguished"));
+                                                    }
+                                                    if (!fireUnderCheat) {
+                                                        if (recipe.getBlockModifyMode() != RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode0_NoModify) {
+                                                            int originalMeta = block.getState().getData().getData();
+                                                            float chance = recipe.getBlockModifyChance();
+                                                            int multi = (int) Math.floor(chance);
+                                                            chance -= multi;
+                                                            if (new Random().nextInt(100) < chance * 100) {
+                                                                multi++;
+                                                            }
+                                                            for (int i = 0; i < multi; i++) {
+                                                                if (block.getState().getType().equals(Material.CAULDRON)) {
+                                                                    if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode1_ReduceMeta) {
+                                                                        if (block.getState().getData().getData() > 0) {
+                                                                            block.setData((byte) (block.getState().getData().getData() - 1));
+                                                                        }
+                                                                    } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode2_IncreaseMeta) {
+                                                                        if (block.getState().getData().getData() < 3) {
+                                                                            block.setData((byte) (block.getState().getData().getData() + 1));
+                                                                        }
+                                                                    }
+                                                                } else if (block.getState().getType().equals(Material.SNOW)) {
+                                                                    if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode1_ReduceMeta || recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode3_ReduceAndDestroyMeta) {
+                                                                        if (block.getState().getData().getData() > 1) {
+                                                                            block.setData((byte) (block.getState().getData().getData() - 1));
+                                                                        } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode3_ReduceAndDestroyMeta) {
+                                                                            block.setType(Material.AIR);
+                                                                        }
+                                                                    } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode2_IncreaseMeta) {
+                                                                        if (block.getState().getData().getData() < 8) {
+                                                                            block.setData((byte) (block.getState().getData().getData() + 1));
+                                                                        }
+                                                                    }
+                                                                } else if (block.getState().getType().equals(Material.ENDER_PORTAL_FRAME)) {
+                                                                    if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode1_ReduceMeta) {
+                                                                        switch (block.getState().getData().getData()) {
+                                                                            case 4:
+                                                                                block.setData((byte) 0);
+                                                                                break;
+                                                                            case 5:
+                                                                                block.setData((byte) 1);
+                                                                                break;
+                                                                            case 6:
+                                                                                block.setData((byte) 2);
+                                                                                break;
+                                                                            case 7:
+                                                                                block.setData((byte) 3);
+                                                                                break;
+                                                                        }
+                                                                    } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode2_IncreaseMeta) {
+                                                                        switch (block.getState().getData().getData()) {
+                                                                            case 0:
+                                                                                block.setData((byte) 4);
+                                                                                break;
+                                                                            case 1:
+                                                                                block.setData((byte) 5);
+                                                                                break;
+                                                                            case 2:
+                                                                                block.setData((byte) 6);
+                                                                                break;
+                                                                            case 3:
+                                                                                block.setData((byte) 7);
+                                                                                break;
+                                                                        }
+                                                                    }
+                                                                } else if (block.getState().getType().equals(Material.ANVIL)) {
+                                                                    if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode1_ReduceMeta || recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode3_ReduceAndDestroyMeta) {
+                                                                        switch (block.getState().getData().getData()) {
+                                                                            case 0:
+                                                                                block.setData((byte) 4);
+                                                                                break;
+                                                                            case 1:
+                                                                                block.setData((byte) 5);
+                                                                                break;
+                                                                            case 2:
+                                                                                block.setData((byte) 6);
+                                                                                break;
+                                                                            case 3:
+                                                                                block.setData((byte) 7);
+                                                                                break;
+                                                                            case 4:
+                                                                                block.setData((byte) 8);
+                                                                                break;
+                                                                            case 5:
+                                                                                block.setData((byte) 9);
+                                                                                break;
+                                                                            case 6:
+                                                                                block.setData((byte) 10);
+                                                                                break;
+                                                                            case 7:
+                                                                                block.setData((byte) 11);
+                                                                                break;
+                                                                        }
+                                                                        if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode3_ReduceAndDestroyMeta) {
+                                                                            switch (block.getState().getData().getData()) {
+                                                                                case 8:
+                                                                                case 9:
+                                                                                case 10:
+                                                                                case 11:
+                                                                                    block.setType(Material.AIR);
+                                                                                    break;
+                                                                            }
+                                                                        }
+                                                                    } else if (recipe.getBlockModifyMode() == RightClickBlockTypeInspectItemListenerEnumBlockModifyMode.Mode2_IncreaseMeta) {
+                                                                        switch (block.getState().getData().getData()) {
+                                                                            case 11:
+                                                                                block.setData((byte) 7);
+                                                                                break;
+                                                                            case 10:
+                                                                                block.setData((byte) 6);
+                                                                                break;
+                                                                            case 9:
+                                                                                block.setData((byte) 5);
+                                                                                break;
+                                                                            case 8:
+                                                                                block.setData((byte) 4);
+                                                                                break;
+                                                                            case 7:
+                                                                                block.setData((byte) 3);
+                                                                                break;
+                                                                            case 6:
+                                                                                block.setData((byte) 2);
+                                                                                break;
+                                                                            case 5:
+                                                                                block.setData((byte) 1);
+                                                                                break;
+                                                                            case 4:
+                                                                                block.setData((byte) 0);
+                                                                                break;
+                                                                        }
+                                                                    }
+                                                                } else if (block.getState().getType().equals(Material.PUMPKIN)) {
+                                                                    block.setType(Material.JACK_O_LANTERN);
+                                                                } else if (block.getState().getType().equals(Material.JACK_O_LANTERN)) {
+                                                                    block.setType(Material.PUMPKIN);
+                                                                }
+                                                            }
+                                                            if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Block meta changed from %d to %d.", recipe.getId(), originalMeta, block.getState().getData().getData()));
+                                                        }
+                                                        if (recipe.getGiveExpValue() >= 0) {
+                                                            int delayMulti = (recipe.getGiveExpTimerEnd() - recipe.getGiveExpTimerStart()) / recipe.getGiveExpCount();
+                                                            Location locadd = block.getLocation();
+                                                            locadd.setY(locadd.getBlockY() + 1);
+                                                            locadd.setX(locadd.getBlockX() + 0.5);
+                                                            locadd.setZ(locadd.getBlockZ() + 0.5);
+                                                            for (int i = 0; i < recipe.getGiveExpCount(); i++) {
+                                                                if (i == recipe.getGiveExpCount() - 1) {
+                                                                    MagicSpells.plugin.getServer().getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> {
+                                                                        ExperienceOrb exporb = (ExperienceOrb) block.getWorld().spawnEntity(locadd, EntityType.EXPERIENCE_ORB);
+                                                                        exporb.setExperience(recipe.getGiveExpValue());
+                                                                    }, recipe.getGiveExpTimerStart() + (i * delayMulti));
+                                                                } else {
+                                                                    MagicSpells.plugin.getServer().getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> {
+                                                                        ExperienceOrb exporb = (ExperienceOrb) block.getWorld().spawnEntity(locadd, EntityType.EXPERIENCE_ORB);
+                                                                        exporb.setExperience(0);
+                                                                    }, recipe.getGiveExpTimerStart() + (i * delayMulti));
+                                                                }
+                                                            }
+                                                            if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Summon %d orbs in %d ticks, all of them are %d exp.", recipe.getId(), recipe.getGiveExpCount(), recipe.getGiveExpTimerEnd() - recipe.getGiveExpTimerStart(), recipe.getGiveExpValue()));
+                                                        }
+                                                        if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] =========================================== Run successfully! ===", recipe.getId()));
+                                                        return recipe.getSkills();
+                                                    } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] Run failed item consumed because who remove fire block first! ===", recipe.getId()));
+                                                } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ===================== Run failed because items are not match! ===", recipe.getId()));
+                                            } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] =========== Run failed because need no fire block under that! ===", recipe.getId()));
+                                        } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ========== Run failed because need any fire block under that! ===", recipe.getId()));
+                                        break;
+                                    }
+                                } if (!blockTypeOk) if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ========= Run failed because clicked block type is not match! ===", recipe.getId()));
+                            } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ================= Run failed because world name is not match! ===", recipe.getId()));
+                        } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ============= Run failed because permission player not have! ===", recipe.getId()));
+                    } else if (recipe.isDebugFlag()) MagicSpells.error(String.format("[%d] ===================== Run failed because action is not equal! ===", recipe.getId()));
+                }
+            }
         }
         return null;
     }

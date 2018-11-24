@@ -275,106 +275,108 @@ public class WalkListener extends PassiveListener {
 	    List<PassiveSpell> sl = new ArrayList<>();
         for (WalkListenerClass recipe : recipes) {
             if (player.hasPermission("magicspells.cast." + recipe.getSkills().get(0).getPermissionName())) {
-                if (recipe.isDebug()) {
-                    MagicSpells.error(String.format("%s ==================================================== Run start! ===", moduleLogPrefix));
-                    MagicSpells.error(String.format("Skill name: %s", recipe.getSkills().get(0).getInternalName()));
-                }
-                boolean worldFlag = false;
-                if (recipe.getWorldName().size() == 0) { worldFlag = true; }
-                else {
-                    if (recipe.isDebug()) { MagicSpells.error(String.format("player world: %s, must in: %s", position.getWorld().getName(), String.join(",", recipe.getWorldName()))); }
-                    if (recipe.getWorldName().contains(position.getWorld().getName())) {
-                        worldFlag = true;
+                if (recipe.getSkills().get(0).getCooldown(player) <= 0) {
+                    if (recipe.isDebug()) {
+                        MagicSpells.error(String.format("%s ==================================================== Run start! ===", moduleLogPrefix));
+                        MagicSpells.error(String.format("Skill name: %s", recipe.getSkills().get(0).getInternalName()));
                     }
-                }
-                if (worldFlag) {
-                    boolean posFlag = false;
-                    if (recipe.getX() == null || recipe.getY() == null || recipe.getZ() == null) {
-                        posFlag = true;
-                    } else {
-                        if (recipe.getX2() == null || recipe.getY2() == null || recipe.getZ2() == null) {
-                            if (recipe.isDebug()) { MagicSpells.error(String.format("position judge: x[%d==%d], y[%d==%d], z[%d==%d]", position.getBlockX(), recipe.getX(), position.getBlockY(), recipe.getY(), position.getBlockZ(), recipe.getZ())); }
-                            if (position.getBlockX() == recipe.getX() && position.getBlockY() == recipe.getY() && position.getBlockZ() == recipe.getZ()) {
-                                posFlag = true;
-                            }
-                        } else {
-                            if (recipe.isDebug()) { MagicSpells.error(String.format("position judge: x[%d<=%d<=%d], y[%d<=%d<=%d], z[%d<=%d<=%d]", recipe.getX(), position.getBlockX(), recipe.getX2(), recipe.getY(), position.getBlockY(), recipe.getY2(), recipe.getZ(), position.getBlockZ(), recipe.getZ2())); }
-                            if (betweenPosition(recipe.getX(), recipe.getX2(), position.getBlockX()) && betweenPosition(recipe.getY(), recipe.getY2(), position.getBlockY()) && betweenPosition(recipe.getZ(), recipe.getZ2(), position.getBlockZ())) {
-                                posFlag = true;
-                            }
+                    boolean worldFlag = false;
+                    if (recipe.getWorldName().size() == 0) { worldFlag = true; }
+                    else {
+                        if (recipe.isDebug()) { MagicSpells.error(String.format("player world: %s, must in: %s", position.getWorld().getName(), String.join(",", recipe.getWorldName()))); }
+                        if (recipe.getWorldName().contains(position.getWorld().getName())) {
+                            worldFlag = true;
                         }
                     }
-                    if (posFlag) {
-                        boolean yawFlag = false;
-                        if (recipe.getYaw() == null) { yawFlag = true; }
-                        else {
-                            if (recipe.getYaw2() == null) {
-                                if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: yaw[%f == %f]", recipe.getYaw(), position.getYaw())); }
-                                if (position.getYaw() == recipe.getYaw()) {
-                                    yawFlag = true;
+                    if (worldFlag) {
+                        boolean posFlag = false;
+                        if (recipe.getX() == null || recipe.getY() == null || recipe.getZ() == null) {
+                            posFlag = true;
+                        } else {
+                            if (recipe.getX2() == null || recipe.getY2() == null || recipe.getZ2() == null) {
+                                if (recipe.isDebug()) { MagicSpells.error(String.format("position judge: x[%d==%d], y[%d==%d], z[%d==%d]", position.getBlockX(), recipe.getX(), position.getBlockY(), recipe.getY(), position.getBlockZ(), recipe.getZ())); }
+                                if (position.getBlockX() == recipe.getX() && position.getBlockY() == recipe.getY() && position.getBlockZ() == recipe.getZ()) {
+                                    posFlag = true;
                                 }
                             } else {
-                                if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: yaw[%f <= %f <= %f]", recipe.getYaw(), position.getYaw(), recipe.getYaw2())); }
-                                if (betweenAngel(recipe.getYaw(), recipe.getYaw2(), position.getYaw())) {
-                                    yawFlag = true;
+                                if (recipe.isDebug()) { MagicSpells.error(String.format("position judge: x[%d<=%d<=%d], y[%d<=%d<=%d], z[%d<=%d<=%d]", recipe.getX(), position.getBlockX(), recipe.getX2(), recipe.getY(), position.getBlockY(), recipe.getY2(), recipe.getZ(), position.getBlockZ(), recipe.getZ2())); }
+                                if (betweenPosition(recipe.getX(), recipe.getX2(), position.getBlockX()) && betweenPosition(recipe.getY(), recipe.getY2(), position.getBlockY()) && betweenPosition(recipe.getZ(), recipe.getZ2(), position.getBlockZ())) {
+                                    posFlag = true;
                                 }
-                            }
-                            if (recipe.isInvertYaw()) {
-                                yawFlag = !yawFlag;
-                                if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: yaw flag invert: %s", yawFlag)); }
                             }
                         }
-                        if (yawFlag) {
-                            boolean pitchFlag = false;
-                            if (recipe.getPitch() == null) { pitchFlag = true; }
+                        if (posFlag) {
+                            boolean yawFlag = false;
+                            if (recipe.getYaw() == null) { yawFlag = true; }
                             else {
-                                if (recipe.getPitch2() == null) {
-                                    if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: pitch[%f == %f]", recipe.getPitch(), position.getPitch())); }
-                                    if (position.getPitch() == recipe.getPitch()) {
-                                        pitchFlag = true;
+                                if (recipe.getYaw2() == null) {
+                                    if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: yaw[%f == %f]", recipe.getYaw(), position.getYaw())); }
+                                    if (position.getYaw() == recipe.getYaw()) {
+                                        yawFlag = true;
                                     }
                                 } else {
-                                    if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: pitch[%f <= %f <= %f]", recipe.getPitch(), position.getPitch(), recipe.getPitch2())); }
-                                    if (betweenAngel(recipe.getPitch(), recipe.getPitch2(), position.getPitch())) {
-                                        pitchFlag = true;
+                                    if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: yaw[%f <= %f <= %f]", recipe.getYaw(), position.getYaw(), recipe.getYaw2())); }
+                                    if (betweenAngel(recipe.getYaw(), recipe.getYaw2(), position.getYaw())) {
+                                        yawFlag = true;
                                     }
+                                }
+                                if (recipe.isInvertYaw()) {
+                                    yawFlag = !yawFlag;
+                                    if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: yaw flag invert: %s", yawFlag)); }
                                 }
                             }
-                            if (pitchFlag) {
-                                boolean materialFlag = false;
-                                if (recipe.getBlockTypes().size() == 0) { materialFlag = true; }
+                            if (yawFlag) {
+                                boolean pitchFlag = false;
+                                if (recipe.getPitch() == null) { pitchFlag = true; }
                                 else {
-                                    if (recipe.isIncludeAir()) {
-                                        int x = position.getBlockX();
-                                        int y = position.getBlockY() - 1;
-                                        int z = position.getBlockZ();
-                                        while (true) {
-                                            if (position.getWorld().getBlockAt(x, y, z).getType() == Material.AIR) {
-                                                y -= 1;
-                                            } else {
-                                                if (blockTypeIsMatch(recipe.getBlockTypes(), position.getWorld().getBlockAt(x, y, z), recipe.isDebug())) {
-                                                    materialFlag = true;
-                                                }
-                                                break;
-                                            }
-                                            if (y < 1) {
-                                                break;
-                                            }
+                                    if (recipe.getPitch2() == null) {
+                                        if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: pitch[%f == %f]", recipe.getPitch(), position.getPitch())); }
+                                        if (position.getPitch() == recipe.getPitch()) {
+                                            pitchFlag = true;
                                         }
                                     } else {
-                                        if (blockTypeIsMatch(recipe.getBlockTypes(), position.getWorld().getBlockAt(position.getBlockX(), position.getBlockY() - 1, position.getBlockZ()), recipe.isDebug())) {
-                                            materialFlag = true;
+                                        if (recipe.isDebug()) { MagicSpells.error(String.format("angel judge: pitch[%f <= %f <= %f]", recipe.getPitch(), position.getPitch(), recipe.getPitch2())); }
+                                        if (betweenAngel(recipe.getPitch(), recipe.getPitch2(), position.getPitch())) {
+                                            pitchFlag = true;
                                         }
                                     }
                                 }
-                                if (materialFlag) {
-                                    sl.addAll(recipe.getSkills());
-                                    if (recipe.isDebug()) MagicSpells.error(String.format("%s ============================================= Run successfully! ===", moduleLogPrefix));
-                                } else if (recipe.isDebug()) MagicSpells.error(String.format("%s =========== Run failed because block under player is not match! ===", moduleLogPrefix));
-                            } else if (recipe.isDebug()) MagicSpells.error(String.format("%s ================= Run failed because player pitch is not match! ===", moduleLogPrefix));
-                        } else if (recipe.isDebug()) MagicSpells.error(String.format("%s =================== Run failed because player yaw is not match! ===", moduleLogPrefix));
-                    } else if (recipe.isDebug()) MagicSpells.error(String.format("%s ============== Run failed because player position is not match! ===", moduleLogPrefix));
-                } else if (recipe.isDebug()) MagicSpells.error(String.format("%s ========= Run failed because player doesn't in specified world! ===", moduleLogPrefix));
+                                if (pitchFlag) {
+                                    boolean materialFlag = false;
+                                    if (recipe.getBlockTypes().size() == 0) { materialFlag = true; }
+                                    else {
+                                        if (recipe.isIncludeAir()) {
+                                            int x = position.getBlockX();
+                                            int y = position.getBlockY() - 1;
+                                            int z = position.getBlockZ();
+                                            while (true) {
+                                                if (position.getWorld().getBlockAt(x, y, z).getType() == Material.AIR) {
+                                                    y -= 1;
+                                                } else {
+                                                    if (blockTypeIsMatch(recipe.getBlockTypes(), position.getWorld().getBlockAt(x, y, z), recipe.isDebug())) {
+                                                        materialFlag = true;
+                                                    }
+                                                    break;
+                                                }
+                                                if (y < 1) {
+                                                    break;
+                                                }
+                                            }
+                                        } else {
+                                            if (blockTypeIsMatch(recipe.getBlockTypes(), position.getWorld().getBlockAt(position.getBlockX(), position.getBlockY() - 1, position.getBlockZ()), recipe.isDebug())) {
+                                                materialFlag = true;
+                                            }
+                                        }
+                                    }
+                                    if (materialFlag) {
+                                        sl.addAll(recipe.getSkills());
+                                        if (recipe.isDebug()) MagicSpells.error(String.format("%s ============================================= Run successfully! ===", moduleLogPrefix));
+                                    } else if (recipe.isDebug()) MagicSpells.error(String.format("%s =========== Run failed because block under player is not match! ===", moduleLogPrefix));
+                                } else if (recipe.isDebug()) MagicSpells.error(String.format("%s ================= Run failed because player pitch is not match! ===", moduleLogPrefix));
+                            } else if (recipe.isDebug()) MagicSpells.error(String.format("%s =================== Run failed because player yaw is not match! ===", moduleLogPrefix));
+                        } else if (recipe.isDebug()) MagicSpells.error(String.format("%s ============== Run failed because player position is not match! ===", moduleLogPrefix));
+                    } else if (recipe.isDebug()) MagicSpells.error(String.format("%s ========= Run failed because player doesn't in specified world! ===", moduleLogPrefix));
+                }
             }
         }
         return sl;
